@@ -477,15 +477,29 @@ z_to_the_z(_CMPLX *z, _CMPLX *out)
 #endif
 #endif
 
-#ifdef XFRACT /* fractint uses the NewtonFractal2 code in newton.asm */
+int
+complex_mult(_CMPLX arg1,_CMPLX arg2,_CMPLX *pz)
+{
+   pz->x = arg1.x*arg2.x - arg1.y*arg2.y;
+   pz->y = arg1.x*arg2.y+arg1.y*arg2.x;
+   return(0);
+}
 
-int complex_div(_CMPLX arg1,_CMPLX arg2,_CMPLX *pz);
-int complex_mult(_CMPLX arg1,_CMPLX arg2,_CMPLX *pz);
+int
+complex_div(_CMPLX numerator,_CMPLX denominator,_CMPLX *pout)
+{
+   double mod;
+   if((mod = modulus(denominator)) < FLT_MIN)
+      return(1);
+   conjugate(&denominator);
+   complex_mult(numerator,denominator,pout);
+   pout->x = pout->x/mod;
+   pout->y = pout->y/mod;
+   return(0);
+}
 
 /* Distance of complex z from unit circle */
 #define DIST1(z) (((z).x-1.0)*((z).x-1.0)+((z).y)*((z).y))
-#define LDIST1(z) (lsqr((((z).x)-fudge)) + lsqr(((z).y)))
-
 
 int NewtonFractal2(void)
 {
@@ -499,7 +513,7 @@ int NewtonFractal2(void)
 
     if (DIST1(new) < threshold)
     {
-       if(fractype==NEWTBASIN || fractype==MPNEWTBASIN)
+       if((fractype==NEWTBASIN) || (fractype==MPNEWTBASIN))
        {
           long tmpcolor;
           int i;
@@ -541,27 +555,6 @@ int NewtonFractal2(void)
     return(0);
 }
 
-int
-complex_mult(_CMPLX arg1,_CMPLX arg2,_CMPLX *pz)
-{
-   pz->x = arg1.x*arg2.x - arg1.y*arg2.y;
-   pz->y = arg1.x*arg2.y+arg1.y*arg2.x;
-   return(0);
-}
-
-int
-complex_div(_CMPLX numerator,_CMPLX denominator,_CMPLX *pout)
-{
-   double mod;
-   if((mod = modulus(denominator)) < FLT_MIN)
-      return(1);
-   conjugate(&denominator);
-   complex_mult(numerator,denominator,pout);
-   pout->x = pout->x/mod;
-   pout->y = pout->y/mod;
-   return(0);
-}
-#endif /* newton code only used by xfractint */
 
 #ifndef XFRACT
 struct MP mproverd, mpd1overd, mpthreshold;
@@ -2541,7 +2534,6 @@ CirclelongFractal()
 /*              Initialization (once per pixel) routines                                                */
 /* -------------------------------------------------------------------- */
 
-#ifdef XFRACT
 /* this code translated to asm - lives in newton.asm */
 /* transform points with reciprocal function */
 void invertz2(_CMPLX *z)
@@ -2558,7 +2550,6 @@ void invertz2(_CMPLX *z)
    z->x *= tempsqrx;      z->y *= tempsqrx;      /* Perform inversion */
    z->x += f_xcenter; z->y += f_ycenter; /* Renormalize */
 }
-#endif
 
 int long_julia_per_pixel(void)
 {

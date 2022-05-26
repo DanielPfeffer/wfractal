@@ -20,6 +20,20 @@
 #include "mathtool.h"
 #include "profile.h"
 
+#if defined(__BORLANDC__)
+static int _getcwd(char* dir, int len)
+{
+    return getcwd(dir, len);
+}
+
+
+static int _chdir(char const* dir)
+{
+    return chdir(dir);
+}
+#endif
+
+
 extern HWND hwnd;                               /* handle to main window */
 extern char szHelpFileName[];                   /* Help file name*/
 

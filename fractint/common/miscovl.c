@@ -1575,8 +1575,7 @@ void showfreemem(void)
    char adapter_name[8];        /* entry lenth from VIDEO.ASM */
    char *adapter_ptr;
 
-   printf("\n CPU type: %d  FPU type: %d  Video: %d",
-          cpu, fpu, video_type);
+   printf("\n Video: %d", video_type);
 
    adapter_ptr = &supervga_list;
 

@@ -529,7 +529,7 @@ struct alternatemathstuff
    int (*per_image)(void);      /* once-per-image setup */
 };
 
-typedef struct alternatemathstuff ALTERNATE;
+typedef struct alternatemathstuff ALTERNAT;
 
 /* defines for symmetry */
 #define  NOSYM          0

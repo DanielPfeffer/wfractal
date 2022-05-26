@@ -1,5 +1,6 @@
 #include <limits.h>
 #include <string.h>
+
 #ifdef __TURBOC__
 #include <alloc.h>
 #elif defined(__APPLE__)
@@ -60,37 +61,17 @@ JuliaSetup(void)            /* Julia Routine */
    return(1);
 }
 
-int
-NewtonSetup(void)           /* Newton/NewtBasin Routines */
+int NewtonSetup(void)           /* Newton/NewtBasin Routines */
 {
    int i;
-#ifndef XFRACT
-   if (debugflag != 1010)
-   {
-      if(fpu != 0)
-      {
-         if(fractype == MPNEWTON)
-            fractype = NEWTON;
-         else if(fractype == MPNEWTBASIN)
-            fractype = NEWTBASIN;
-      }
-      else
-      {
-         if(fractype == NEWTON)
-               fractype = MPNEWTON;
-         else if(fractype == NEWTBASIN)
-               fractype = MPNEWTBASIN;
-      }
-      curfractalspecific = &fractalspecific[fractype];
-   }
-#else
+
    if(fractype == MPNEWTON)
       fractype = NEWTON;
-   else if(fractype == MPNEWTBASIN)
+   if(fractype == MPNEWTBASIN)
       fractype = NEWTBASIN;
 
    curfractalspecific = &fractalspecific[fractype];
-#endif
+
    /* set up table of roots of 1 along unit circle */
    degree = (int)parm.x;
    if(degree < 2)
@@ -102,14 +83,6 @@ NewtonSetup(void)           /* Newton/NewtBasin Routines */
    d1overd      = (double)(degree - 1) / (double)degree;
    maxcolor     = 0;
    threshold    = .3*PI/degree; /* less than half distance between roots */
-#ifndef XFRACT
-   if (fractype == MPNEWTON || fractype == MPNEWTBASIN) {
-      mproverd     = *pd2MP(roverd);
-      mpd1overd    = *pd2MP(d1overd);
-      mpthreshold  = *pd2MP(threshold);
-      mpone        = *pd2MP(1.0);
-   }
-#endif
 
    floatmin = FLT_MIN;
    floatmax = FLT_MAX;
@@ -144,33 +117,6 @@ NewtonSetup(void)           /* Newton/NewtBasin Routines */
          roots[i].y = sin(i*twopi/(double)degree);
       }
    }
-#ifndef XFRACT
-   else if (fractype==MPNEWTBASIN)
-   {
-     if(parm.y)
-         basin = 2; /*stripes */
-      else
-         basin = 1;
-
-      if(degree > 16)
-      {
-         if((MPCroots=(struct MPC *)malloc(degree*sizeof(struct MPC)))==NULL)
-         {
-            MPCroots = (struct MPC *)staticroots;
-            degree = 16;
-         }
-      }
-      else
-         MPCroots = (struct MPC *)staticroots;
-
-      /* list of roots to discover where we converged for newtbasin */
-      for(i=0;i<degree;i++)
-      {
-         MPCroots[i].x = *pd2MP(cos(i*twopi/(double)degree));
-         MPCroots[i].y = *pd2MP(sin(i*twopi/(double)degree));
-      }
-   }
-#endif
 
    param[0] = (double)degree; /* JCO 7/1/92 */
    if (degree%4 == 0)
@@ -179,16 +125,11 @@ NewtonSetup(void)           /* Newton/NewtBasin Routines */
       symmetry = XAXIS;
 
    calctype=StandardFractal;
-#ifndef XFRACT
-   if (fractype == MPNEWTON || fractype == MPNEWTBASIN)
-      setMPfunctions();
-#endif
    return(1);
 }
 
 
-int
-StandaloneSetup(void)
+int StandaloneSetup(void)
 {
    timer(0,curfractalspecific->calctype);
    return(0);           /* effectively disable solid-guessing */
@@ -245,39 +186,8 @@ MandelfpSetup(void)
             && (orbitsave&2) == 0)
         {
            calctype = calcmandfp; /* the normal case - use calcmandfp */
-#ifndef XFRACT
-           if (cpu >= 386 && fpu >= 387)
-           {
-              calcmandfpasmstart_p5();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_p5;
-           }
-           else if (cpu == 286 && fpu >= 287)
-           {
-              calcmandfpasmstart();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_287;
-           }
-           else
-
-           {
-              calcmandfpasmstart();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_87;
-           }
-#else
-           {
-#ifdef NASM
-            if (fpu == -1)
-            {
-              calcmandfpasmstart_p5();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_p5;
-            }
-            else
-#endif
-            {
-              calcmandfpasmstart();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_c;
-            }
-           }
-#endif
+           calcmandfpasmstart();
+           calcmandfpasm = calcmandfpasm_c;
         }
         else
         {
@@ -384,38 +294,8 @@ JuliafpSetup(void)
             && (orbitsave&2) == 0)
         {
            calctype = calcmandfp; /* the normal case - use calcmandfp */
-#ifndef XFRACT
-           if (cpu >= 386 && fpu >= 387)
-           {
-              calcmandfpasmstart_p5();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_p5;
-           }
-           else if (cpu == 286 && fpu >= 287)
-           {
-              calcmandfpasmstart();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_287;
-           }
-           else
-           {
-              calcmandfpasmstart();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_87;
-           }
-#else
-           {
-#ifdef NASM
-            if (fpu == -1)
-            {
-              calcmandfpasmstart_p5();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_p5;
-            }
-            else
-#endif
-            {
-              calcmandfpasmstart();
-              calcmandfpasm = (long (*)(void))calcmandfpasm_c;
-            }
-           }
-#endif
+           calcmandfpasmstart();
+           calcmandfpasm = calcmandfpasm_c;
         }
         else
         {

@@ -976,13 +976,11 @@ static int _fastcall Bif_Periodic (long time)  /* Bifurcation Population Periodi
 /* The following are Bifurcation "orbitcalc" routines...              */
 /*                                                                                                    */
 /**********************************************************************/
-#ifdef XFRACT
-int BifurcLambda() /* Used by lyanupov */
+int BifurcLambda(void) /* Used by lyanupov */
   {
     Population = Rate * Population * (1 - Population);
     return (fabs(Population) > BIG);
   }
-#endif
 
 /* Modified formulas below to generalize bifurcations. JCO 7/3/92 */
 
@@ -1189,16 +1187,10 @@ int popcorn()   /* subset of std engine */
 int lyaLength, lyaSeedOK;
 int lyaRxy[34];
 
-#define WES 1   /* define WES to be 0 to use Nick's lyapunov.obj */
-#if WES
-int lyapunov_cycles(double, double);
-#else
-int lyapunov_cycles(int, double, double, double);
-#endif
-
 int lyapunov_cycles_in_c(long, double, double);
 
-int lyapunov () {
+int lyapunov(void)
+ {
     double a, b;
 
     if (keypressed()) {
@@ -1221,22 +1213,7 @@ int lyapunov () {
         a = dypixel();
         b = dxpixel();
         }
-#ifndef XFRACT
-    /*  the assembler routines don't work for a & b outside the
-        ranges 0 < a < 4 and 0 < b < 4. So, fall back on the C
-        routines if part of the image sticks out.
-        */
-#if WES
-        color=lyapunov_cycles(a, b);
-#else
-    if (lyaSeedOK && a>0 && b>0 && a<=4 && b<=4)
-        color=lyapunov_cycles(filter_cycles, Population, a, b);
-    else
-        color=lyapunov_cycles_in_c(filter_cycles, a, b);
-#endif
-#else
     color=lyapunov_cycles_in_c(filter_cycles, a, b);
-#endif
     if (inside>0 && color==0)
         color = inside;
     else if (color>=colors)

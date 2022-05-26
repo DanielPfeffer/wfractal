@@ -1014,7 +1014,7 @@ asm386lMANRbailout      endp
 
         extrn new:qword, old:qword, tmp:qword
         extrn rqlim:qword, magnitude:qword, tempsqrx:qword, tempsqry:qword
-        extrn cpu:word, fpu:word, floatparm:word
+        extrn floatparm:word
 
 .code FRACTALS_TEXT
 

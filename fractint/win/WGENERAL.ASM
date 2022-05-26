@@ -98,10 +98,6 @@ extrn	cpu:word			; cpu flag:	 88 = 8088/8086
 					;		186 = 80188/186
 					;		286 = 80286
 					;		386 = 80386/486
-extrn	fpu:word			; fpu flag:	  0 = none
-					;		 87 = 8087
-					;               287 = 80287
-					;		387 = 80387/(487)
 
 temp	dw	5 dup(0)		; temporary 64-bit result goes here
 sign	db	0			; sign flag goes here

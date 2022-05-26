@@ -15,22 +15,28 @@
 
 */
 
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <windows.h>
+#include <windowsx.h>
+
 #include "port.h"
 #include "prototyp.h"
 
-#include <windows.h>
 #include "winfract.h"
 #include "mathtool.h"
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include "profile.h"
 
-static char MTClassName[] =     "FFWMathTools";
-static char MTWindowTitle[] =   "Math Tools";
+
+static char const MTClassName[]   = "FFWMathTools";
+static char const MTWindowTitle[] = "Math Tools";
+
+LRESULT CALLBACK MTWndProc(HWND, UINT, WPARAM, LPARAM);
+
 HWND hFractalWnd, hMathToolsWnd, hCoordBox, hZoomDlg, hZoomBar;
 HANDLE hThisInst, hZoomBrush, hZoomPen;
-long FAR PASCAL MTWndProc(HWND, UINT, WPARAM, LPARAM);
 int MTWindowOpen = 0, CoordBoxOpen = 0, KillCoordBox = 0;
 int ZoomBarOpen = 0, KillZoomBar = 0, Zooming = 0, TrackingZoom = 0;
 POINT ZoomClick, ZoomCenter;
@@ -38,7 +44,7 @@ int ZoomBarMax = 100, ZoomBarMin = -100;
 int Sizing = 1, ReSizing = 0;
 
 static double Pi =  3.14159265359;
-FARPROC DefZoomProc;
+WNDPROC DefZoomProc;
 
 RECT ZoomRect;
 
@@ -296,7 +302,8 @@ void ExecuteZoom(void) {
    calc_status = 0;
 }
 
-BOOL FAR PASCAL ZoomBarProc(HWND hWnd, UINT Message, WPARAM wp, LPARAM dp) {
+BOOL CALLBACK __export ZoomBarProc(HWND hWnd, UINT Message, WPARAM wp, LPARAM dp)
+{
    switch(Message) {
       case WM_KEYDOWN:
          switch(wp) {
@@ -315,7 +322,8 @@ BOOL FAR PASCAL ZoomBarProc(HWND hWnd, UINT Message, WPARAM wp, LPARAM dp) {
    return((BOOL)CallWindowProc(DefZoomProc, hWnd, Message, wp, dp));
 }
 
-BOOL FAR PASCAL ZoomBarDlg(HWND hDlg, WORD Message, WORD wp, DWORD dp) {
+BOOL CALLBACK __export ZoomBarDlg(HWND hDlg, UINT Message, WPARAM wp, LPARAM dp)
+{
    FARPROC lpFnct;
 
    switch(Message) {
@@ -329,7 +337,7 @@ BOOL FAR PASCAL ZoomBarDlg(HWND hDlg, WORD Message, WORD wp, DWORD dp) {
          hZoomDlg = hDlg;
          hZoomBrush = GetStockObject(BLACK_BRUSH);
          hZoomPen = GetStockObject(WHITE_PEN);
-         if(!(lpFnct = MakeProcInstance(ZoomBarProc, hThisInst)))
+         if(!(lpFnct = MakeProcInstance((FARPROC)ZoomBarProc, hThisInst)))
             return(FALSE);
          if(!(hZoomBar = CreateWindow("scrollbar", 0, WS_CHILD |
                            WS_TABSTOP | SBS_VERT,
@@ -342,7 +350,7 @@ BOOL FAR PASCAL ZoomBarDlg(HWND hDlg, WORD Message, WORD wp, DWORD dp) {
          Zooming = 0;
 
          /* Create a Window Subclass */
-         DefZoomProc = (FARPROC)GetWindowLong(hZoomBar, GWL_WNDPROC);
+         DefZoomProc = (WNDPROC)GetWindowLong(hZoomBar, GWL_WNDPROC);
          SetWindowLong(hZoomBar, GWL_WNDPROC, (LONG)lpFnct);
          return(TRUE);
       case WM_MOVE:
@@ -390,14 +398,16 @@ BOOL FAR PASCAL ZoomBarDlg(HWND hDlg, WORD Message, WORD wp, DWORD dp) {
    return(FALSE);
 }
 
-void ZoomBar(HWND hWnd) {
-   FARPROC lpFnct;
+void ZoomBar(HWND hWnd)
+{
+   DLGPROC lpFnct;
 
    hFractalWnd = hWnd;
    if(ZoomBarOpen)
       KillZoomBar = TRUE;
    else {
-      if(lpFnct = MakeProcInstance(ZoomBarDlg, hThisInst)) {
+      if(lpFnct = MakeProcInstance((FARPROC)ZoomBarDlg, hThisInst))
+      {
          if(CreateDialog(hThisInst, "ZoomBar", hWnd, lpFnct))
          {
             SetFocus(hWnd);
@@ -412,7 +422,8 @@ void ZoomBar(HWND hWnd) {
 
 /* Coordinate Box */
 
-BOOL FAR PASCAL CoordBoxDlg(HWND hDlg, WORD Message, WORD wp, DWORD dp) {
+BOOL CALLBACK __export CoordBoxDlg(HWND hDlg, UINT Message, WPARAM wp, LPARAM dp)
+{
    HMENU hDlgMenu;
 
    hDlgMenu = GetMenu(hDlg);
@@ -516,14 +527,15 @@ void UpdateCoordBox(DWORD dw) {
    SetDlgItemText(hCoordBox, ID_Y_COORD, yStr);
 }
 
-void CoordinateBox(HWND hWnd) {
-   FARPROC lpCoordBox;
+void CoordinateBox(HWND hWnd)
+{
+   DLGPROC lpCoordBox;
 
    hFractalWnd = hWnd;
    if(CoordBoxOpen)
       KillCoordBox = TRUE;
    else {
-      if(lpCoordBox = MakeProcInstance(CoordBoxDlg, hThisInst)) {
+      if(lpCoordBox = MakeProcInstance((FARPROC)CoordBoxDlg, hThisInst)) {
          if(CreateDialog(hThisInst, "CoordBox", hWnd, lpCoordBox))
             return;
       }
@@ -570,7 +582,8 @@ void MathToolBox(HWND hWnd) {
 }
 
 
-long FAR PASCAL MTWndProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK __export MTWndProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+{
    switch (Message) {
       case WM_CREATE:
          CheckMenuItem(GetMenu(hFractalWnd), IDM_MATH_TOOLS, MF_CHECKED);

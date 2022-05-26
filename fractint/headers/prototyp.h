@@ -16,6 +16,7 @@
 #ifdef XFRACT
 #include "unixprot.h"
 #endif
+long calcmandfpasm_c(void);
 
 #ifdef WINFRACT
 #include "winprot.h"
@@ -41,13 +42,8 @@ extern long (*calcmandfpasm)(void);
 
 extern void cdecl FPUcplxmul(_CMPLX *, _CMPLX *, _CMPLX *);
 extern void cdecl FPUcplxdiv(_CMPLX *, _CMPLX *, _CMPLX *);
-#ifndef XFRACT
-extern void cdecl FPUsincos(double *, double *, double *);
-extern void cdecl FPUsinhcosh(double *, double *, double *);
-#else
 extern void cdecl FPUsincos(LDBL *, LDBL *, LDBL *);
 extern void cdecl FPUsinhcosh(LDBL *, LDBL *, LDBL *);
-#endif
 extern void cdecl FPUcplxlog(_CMPLX *, _CMPLX *);
 extern void cdecl SinCos086(long , long *, long *);
 extern void cdecl SinhCosh086(long , long *, long *);
@@ -58,21 +54,12 @@ extern unsigned long far cdecl ExpFudged(long , int );
 extern long far cdecl RegDivFloat(long , long );
 extern long far cdecl LogFudged(unsigned long , int );
 extern long far cdecl LogFloat14(unsigned long );
-#ifndef XFRACT
-extern long far cdecl RegFg2Float(long, char);
-extern long far cdecl RegSftFloat(long, char);
-#else
 extern long far cdecl RegFg2Float(long , int );
 extern long far cdecl RegSftFloat(long , int );
-#endif
 
 /*  fpu387 -- assembler file prototypes */
 
-#ifndef XFRACT
-extern void cdecl FPUaptan387(double *, double *, double *);
-#else
-extern void cdecl FPUaptan387(LDBL *, LDBL *, LDBL *);
-#endif
+void cdecl FPUaptan387(LDBL *, LDBL *, LDBL *);
 extern void cdecl FPUcplxexp387(_CMPLX *, _CMPLX *);
 
 /*  fracsuba -- assembler file prototypes */

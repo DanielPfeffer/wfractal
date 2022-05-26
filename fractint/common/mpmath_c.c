@@ -164,29 +164,15 @@ struct MP  *(*pd2MP)(double x)                 = d2MP086 ;
 double *(*pMP2d)(struct MP m)                  = MP2d086 ;
 /* struct MP  *(*pfg2MP)(long x, int fg)          = fg2MP086; */
 
-void setMPfunctions(void) {
-   if(cpu >= 386)
-   {
-      pMPmul = MPmul386;
-      pMPdiv = MPdiv386;
-      pMPadd = MPadd386;
-      pMPsub = MPsub386;
-      pMPcmp = MPcmp386;
-      pd2MP  = d2MP386 ;
-      pMP2d  = MP2d386 ;
-      /* pfg2MP = fg2MP386; */
-   }
-   else
-   {
-      pMPmul = MPmul086;
-      pMPdiv = MPdiv086;
-      pMPadd = MPadd086;
-      pMPsub = MPsub086;
-      pMPcmp = MPcmp086;
-      pd2MP  = d2MP086 ;
-      pMP2d  = MP2d086 ;
-      /* pfg2MP = fg2MP086; */
-   }
+void setMPfunctions(void)
+{
+    pMPmul = MPmul086;
+    pMPdiv = MPdiv086;
+    pMPadd = MPadd086;
+    pMPsub = MPsub086;
+    pMPcmp = MPcmp086;
+    pd2MP  = d2MP086 ;
+    pMP2d  = MP2d086 ;
 }
 #if (_MSC_VER >= 700)
 #pragma code_seg ()       /* back to normal segment */
@@ -231,21 +217,13 @@ _CMPLX ComplexPower(_CMPLX xx, _CMPLX yy) {
    FPUcplxlog(&xx, &cLog);
    FPUcplxmul(&cLog, &yy, &t);
 
-   if(fpu >= 387)
-      FPUcplxexp387(&t, &z);
-   else {
-      if(t.x < -690)
-         e2x = 0.0;
-      else
-         e2x = expl(t.x);
-#ifdef XFRACT
-      if (isnan(e2x) || isinf(e2x))
-         e2x = 1.0;
-#endif
-      FPUsincos(&t.y, &siny, &cosy);
-      z.x = (double) (e2x * cosy);
-      z.y = (double) (e2x * siny);
-   }
+   if(t.x < -690)
+      e2x = 0.0;
+   else
+      e2x = expl(t.x);
+   FPUsincos(&t.y, &siny, &cosy);
+   z.x = (double) (e2x * cosy);
+   z.y = (double) (e2x * siny);
    return(z);
 }
 

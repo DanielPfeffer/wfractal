@@ -116,7 +116,6 @@ int release;
 extern int win_release;
 extern int save_release;
 void        (*outln_cleanup)();
-extern int fpu;
 
 int compare_fractalnames( const void *element1, const void *element2)
 {
@@ -188,7 +187,7 @@ dotmode = 1;
 diskvideo = 0;
 usr_distest = 0;
 
-max_kbdcount=(cpu==386) ? 80 : 30; /* check the keyboard less often */
+max_kbdcount = 80; /* check the keyboard less often */
 
 /* ----- */
 
@@ -229,8 +228,6 @@ if (debugflag == 10000) {   /* check for free memory */
    sprintf(temp," %d NEAR bytes free", i);
    stopmsg(0,temp);
    }
-
-if (debugflag == 70) fpu = 0;
 
    if(!history)
    {

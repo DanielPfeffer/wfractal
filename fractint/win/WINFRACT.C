@@ -175,7 +175,7 @@ int win_xdots, win_ydots;
 double jxxmin, jxxmax, jyymin, jyymax, jxx3rd, jyy3rd;
 extern int frommandel;
 
-int cpu, fpu;                        /* cpu, fpu flags */
+int cpu;                        /* cpu, fpu flags */
 
 extern int win_release;
 
@@ -299,9 +299,6 @@ BOOL InitInstance(hInstance, nCmdShow)
     if (WinFlags & WF_CPU286) cpu = 286;
     if (WinFlags & WF_CPU386) cpu = 386;
     if (WinFlags & WF_CPU486) cpu = 386;
-    fpu = 0;                              /* determine the FPU type */
-    if (WinFlags & WF_80x87)  fpu = 87;
-    if (fpu && (cpu == 386))  fpu = 387;
 
     version = LOWORD(GetVersion());        /* which version of Windows is it? */
     windows_version = ((LOBYTE(version) << 8) | HIBYTE(version));

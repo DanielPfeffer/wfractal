@@ -1731,22 +1731,20 @@ void lStkLog(void) {
 
 void (*StkLog)(void) = dStkLog;
 
-void FPUcplxexp(_CMPLX *x, _CMPLX *z) {
-   LDBL e2x, siny, cosy;
+void FPUcplxexp(_CMPLX *x, _CMPLX *z)
+{
+    LDBL e2x, siny, cosy;
 
-   if(fpu >= 387)
-      FPUcplxexp387(x, z);
-   else {
-      e2x = expl(x->x);
-      FPUsincos(&x->y, &siny, &cosy);
-      z->x = e2x * cosy;
-      z->y = e2x * siny;
-   }
+    e2x = expl(x->x);
+    FPUsincos(&x->y, &siny, &cosy);
+    z->x = e2x * cosy;
+    z->y = e2x * siny;
 }
 
-   void dStkExp(void) {
-      FPUcplxexp(&Arg1->d, &Arg1->d);
-   }
+void dStkExp(void)
+{
+    FPUcplxexp(&Arg1->d, &Arg1->d);
+}
 
 #ifndef XFRACT
 void mStkExp(void) {
@@ -3864,33 +3862,13 @@ int RunForm(char *Name, int from_prompts1c) {  /*  returns 1 if an error occurre
 }
 
 
-int fpFormulaSetup(void) {
+int fpFormulaSetup(void)
+{
 
    int RunFormRes;              /* CAE fp */
-#ifndef XFRACT
-   if (fpu > 0) {
-      MathType = D_MATH;
-      /* CAE changed below for fp */
-      RunFormRes = !RunForm(FormName, 0); /* RunForm() returns 1 for failure */
-      if (RunFormRes && fpu >=387 && debugflag != 90 && (orbitsave&2) == 0
-            && !Randomized)
-         return CvtStk(); /* run fast assembler code in parsera.asm */
-      return RunFormRes;
-   }
-   else {
-      MathType = M_MATH;
-      return !RunForm(FormName, 0);
-   }
-#else
    MathType = D_MATH;
    RunFormRes = !RunForm(FormName, 0); /* RunForm() returns 1 for failure */
-#if 0
-   if (RunFormRes && fpu == -1 && debugflag != 90 && (orbitsave&2) == 0
-         && !Randomized)
-      return CvtStk(); /* run fast assembler code in parsera.asm */
-#endif
    return RunFormRes;
-#endif
 }
 
 int intFormulaSetup(void) {
@@ -3987,7 +3965,7 @@ static void parser_allocate(void)
          typespecific_workarea = (char far *)MK_FP(extraseg,0) + end_dx_array;
          used_extra = 1;
       }
-      else if((1L<<16 > (end_dx_array + total_formula_mem)) && big_formula == 0)
+      else if(((1L << 16) > (end_dx_array + total_formula_mem)) && (big_formula == 0))
       {
          typespecific_workarea = (char far *)MK_FP(extraseg,0) + end_dx_array;
          used_extra = 1;

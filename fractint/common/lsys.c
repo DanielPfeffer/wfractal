@@ -845,10 +845,10 @@ LSysISizeTransform(char far *s, struct lsys_turtlestatei *ts)
   void (*minus)() = (ispow2(ts->maxangle)) ? lsysi_dominus_pow2 : lsysi_dominus;
   void (*pipe)() = (ispow2(ts->maxangle)) ? lsysi_dopipe_pow2 : lsysi_dopipe;
 
-  void (*slash)() =  (cpu >= 386) ? lsysi_doslash_386 : lsysi_doslash;
-  void (*bslash)() = (cpu >= 386) ? lsysi_dobslash_386 : lsysi_dobslash;
-  void (*at)() =     (cpu >= 386) ? lsysi_doat_386 : lsysi_doat;
-  void (*dogf)() =   (cpu >= 386) ? lsysi_dosizegf_386 : lsysi_dosizegf;
+  void (*slash)() =  lsysi_doslash;
+  void (*bslash)() = lsysi_dobslash;
+  void (*at)() =     lsysi_doat;
+  void (*dogf)() =   lsysi_dosizegf;
 
   ret = (struct lsys_cmd far *) farmemalloc((long) maxval * sizeof(struct lsys_cmd));
   if (ret == NULL) {
@@ -927,10 +927,10 @@ LSysIDrawTransform(char far *s, struct lsys_turtlestatei *ts)
   void (*minus)() = (ispow2(ts->maxangle)) ? lsysi_dominus_pow2 : lsysi_dominus;
   void (*pipe)() = (ispow2(ts->maxangle)) ? lsysi_dopipe_pow2 : lsysi_dopipe;
 
-  void (*slash)() =  (cpu >= 386) ? lsysi_doslash_386 : lsysi_doslash;
-  void (*bslash)() = (cpu >= 386) ? lsysi_dobslash_386 : lsysi_dobslash;
-  void (*at)() =     (cpu >= 386) ? lsysi_doat_386 : lsysi_doat;
-  void (*drawg)() =  (cpu >= 386) ? lsysi_dodrawg_386 : lsysi_dodrawg;
+  void (*slash)() =  lsysi_doslash;
+  void (*bslash)() = lsysi_dobslash;
+  void (*at)() =     lsysi_doat;
+  void (*drawg)() =  lsysi_dodrawg;
 
   ret = (struct lsys_cmd far *) farmemalloc((long) maxval * sizeof(struct lsys_cmd));
   if (ret == NULL) {

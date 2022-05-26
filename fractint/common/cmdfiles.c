@@ -1224,11 +1224,6 @@ int cmdarg(char *curarg,int mode) /* process a single argument */
 
       if (far_strcmp(variable,s_fpu) == 0) {
          if (far_strcmp(value,s_387) == 0) {
-#ifndef XFRACT
-            fpu = 387;
-#else
-            fpu = -1;
-#endif
             return 0;
             }
          goto badarg;

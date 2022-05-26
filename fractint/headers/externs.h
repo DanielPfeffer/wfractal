@@ -10,7 +10,7 @@
 /* keep var names in column 30 for sorting via sort /+30 <in >out */
 extern int                   active_system;
 extern int                   adapter;
-extern ALTERNATE far         alternatemath[];
+extern ALTERNAT far          alternatemath[];
 extern int                   Ambient;
 extern int                   andcolor;
 extern struct MP             Ans;
@@ -184,7 +184,6 @@ extern int                   fm_vol; /*volume of OPL-3 soundcard output*/
 extern int                   forcesymmetry;
 extern char                  FormFileName[];
 extern char                  FormName[];
-extern int                   fpu;
 extern int                   fractype;
 extern char *                fract_dir1;
 extern char *                fract_dir2;
