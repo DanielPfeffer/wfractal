@@ -1,0 +1,39 @@
+NAME            WinFrac
+DESCRIPTION     'Fractint For Windows 3.x'
+EXETYPE         WINDOWS
+;
+;                              use one of the following statements:
+;               PROTMODE        ; if using Quick-C for Windows
+STUB            'WINSTUB.EXE'   ; if using Microsoft's SDK
+CODE            PRELOAD MOVEABLE DISCARDABLE
+DATA            PRELOAD FIXED
+HEAPSIZE        4096
+STACKSIZE       8192
+
+EXPORTS
+    MAINWNDPROC         @1
+    ABOUT               @2
+    COORDBOXDLG         @3
+    MTWNDPROC           @4
+    PRINTABORT          @5
+    PRINTABORTDLG       @6
+    SELECT3D            @7
+    SELECT3DPLANAR      @8
+    SELECT3DSPHERICAL	@9
+    SELECTCYCLE         @10
+    SELECTDOODADS       @11
+    SELECTEXTENDED      @12
+    SELECTFRACPARAMS    @13
+    SELECTFRACTAL       @14
+    SELECTFULLSCREEN    @15
+    SELECTFUNNYGLASSES  @16
+    SELECTIFS3D         @17
+    SELECTIMAGE         @18
+    SELECTSAVEPAR       @19
+    SELECTSTARFIELD     @20
+    STATUS              @21
+    STATUSBOXPROC       @22
+    WINTEXT_PROC        @23
+    ZOOMBARDLG          @24
+    ZOOMBARPROC         @25
+
