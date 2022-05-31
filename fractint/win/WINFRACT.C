@@ -15,15 +15,19 @@
 
 ****************************************************************************/
 
+#include <string.h>
+#include <time.h>
+
 #define STRICT
+#include <windows.h>
+#include <windowsx.h>
+
+#include <search.h>
+
+#include "resource.h"
 
 #include "port.h"
 #include "prototyp.h"
-
-#include <windows.h>
-#include <search.h>
-#include <time.h>
-#include <string.h>
 
 #include "winfract.h"
 #include "mathtool.h"
@@ -41,23 +45,21 @@ HANDLE hAccTable;                        /* handle to accelerator table */
 extern BOOL ZoomBarOpen;
 int ZoomMode;
 
-HWND hMainWnd, hwnd;                     /* handle to main window */
-HWND hWndCopy;                                 /* Copy of hWnd */
+static HWND hMainWnd;
+HWND hwnd;                     /* handle to main window */
+static HWND hWndCopy;                                 /* Copy of hWnd */
 
 char far winfract_title_text[41];        /* Winfract title-bar text */
 
 #define PALETTESIZE 256               /* dull-normal VGA                    */
-HANDLE hpal;                          /* palette handle                     */
-PAINTSTRUCT ps;                       /* paint structure                    */
-HDC hDC;                              /* handle to device context           */
-HDC hMemoryDC;                        /* handle to memory device context    */
-BITMAP Bitmap;                        /* bitmap structure                   */
+static PAINTSTRUCT ps;                       /* paint structure                    */
+static HDC hDC;                              /* handle to device context           */
 extern time_t last_time;
-unsigned IconWidth, IconHeight, IconSize;
-HANDLE hIconBitmap;
+static unsigned IconWidth, IconHeight, IconSize;
+static HANDLE hIconBitmap;
 
 HANDLE  hPal;          /* Handle to the application's logical palette  */
-HANDLE  hLogPal;       /* Temporary Handle */
+static HANDLE  hLogPal;       /* Temporary Handle */
 LPLOGPALETTE pLogPal;  /* pointer to the application's logical palette */
 int     iNumColors;    /* Number of colors supported by device               */
 int     iRasterCaps;   /* Raster capabilities                                       */
@@ -81,8 +83,6 @@ extern int TrackingZoom, Zooming, ReSizing;
 
 #define EXE_NAME_MAX_SIZE  128
 
-BOOL       bHelp = FALSE;      /* Help mode flag; TRUE = "ON"*/
-HCURSOR    hHelpCursor;        /* Cursor displayed when in help mode*/
 char       szHelpFileName[EXE_NAME_MAX_SIZE+1];    /* Help file name*/
 
 void MakeHelpPathName(char*);  /* Function deriving help file path */
@@ -98,27 +98,9 @@ BOOL bMove  = FALSE;
 BOOL bMoving = FALSE;
 BOOL zoomflag = FALSE;                /* TRUE if a zoom-box selected */
 extern POINT DragPoint;
-RECT Rect;
+static RECT Rect;
 
 int Shape = SL_ZOOM;            /* shape to use for the selection rectangle */
-
-/* pointers to various dialog-box routines */
-FARPROC lpProcAbout;
-FARPROC lpSelectFractal;
-FARPROC lpSelectFracParams;
-FARPROC lpSelectImage;
-FARPROC lpSelectDoodads;
-FARPROC lpSelectExtended;
-FARPROC lpSelectSavePar;
-FARPROC lpSelectCycle;
-FARPROC lpProcStatus;
-FARPROC lpSelect3D;
-FARPROC lpSelect3DPlanar;
-FARPROC lpSelect3DSpherical;
-FARPROC lpSelectIFS3D;
-FARPROC lpSelectFunnyGlasses;
-FARPROC lpSelectLightSource;
-FARPROC lpSelectStarfield;
 
 extern int FileFormat;
 extern unsigned char DefPath[];
@@ -126,12 +108,11 @@ extern char far StatusTitle[];
 unsigned char far DialogTitle[128];
 unsigned char FileName[128];
 unsigned char FullPathName[FILE_MAX_DIR];
-unsigned char DefSpec[13];
 unsigned char DefExt[10];
 
-HBITMAP hBitmap, oldBitmap, oldoldbitmap;              /* working bitmaps */
+static HBITMAP hBitmap;              /* working bitmaps */
 
-HANDLE hDibInfo;                /* handle to the Device-independent bitmap */
+static HANDLE hDibInfo;                /* handle to the Device-independent bitmap */
 LPBITMAPINFO pDibInfo;                /* pointer to the DIB info */
 HANDLE hpixels;                        /* handle to the DIB pixels */
 unsigned char huge *pixels;        /* the device-independent bitmap  pixels */
@@ -140,7 +121,7 @@ extern long win_bitmapsize;     /* size of the DIB in bytes */
 extern        int        resave_flag;        /* resaving after a timed save */
 extern        char overwrite;         /* overwrite on/off */
 
-HANDLE hClipboard1, hClipboard2, hClipboard3; /* handles to clipboard info */
+static HANDLE hClipboard1, hClipboard2, hClipboard3; /* handles to clipboard info */
 LPSTR lpClipboard1, lpClipboard2;            /* pointers to clipboard info */
 
 int last_written_y = -2;        /* last line written */
@@ -186,12 +167,12 @@ extern int onthelist[];
 extern int CountFractalList;
 extern int CurrentFractal;
 int MaxFormNameChoices = 80;
-char FormNameChoices[80][25];
+static char FormNameChoices[80][25];
 extern char FormName[];
 extern char        IFSFileName[];    /* IFS code file */
 extern char        IFSName[];        /* IFS code item */
 double far *temp_array;
-HANDLE htemp_array;
+static HANDLE htemp_array;
 
 HANDLE hSaveCursor;             /* the original cursor value */
 HANDLE hHourGlass;              /* the hourglass cursor value */
@@ -207,41 +188,10 @@ char far winfract_msg03[] = "FractintForWindowsV0010";
 char far winfract_msg04[] = "WinfractAcc";
 char far winfract_msg96[] = "I'm sorry, but color-cycling \nrequires a palette-based\nvideo driver";
 char far winfract_msg97[] = "There isn't enough available\nmemory to run Winfract";
-char far winfract_msg98[] =  "This program requires Standard\nor 386-Enhanced Mode";
 char far winfract_msg99[] = "Not Enough Free Memory to Copy to the Clipboard";
 
 
-int PASCAL WinMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow)
-HINSTANCE hInstance;
-HINSTANCE hPrevInstance;
-LPSTR lpCmdLine;
-int nCmdShow;
-{
-    win_lpCmdLine = lpCmdLine;
-
-    if (!hPrevInstance)
-        if (!InitApplication(hInstance))
-            return (FALSE);
-
-    if (!InitInstance(hInstance, nCmdShow))
-        return (FALSE);
-
-    fractint_main();            /* fire up the main Fractint code */
-    if(htemp_array) {
-        GlobalUnlock(htemp_array);
-        GlobalFree(htemp_array);
-    }
-
-    wintext_destroy();                /* destroy the text window */
-
-    DestroyWindow(hWndCopy);    /* stop everything when it returns */
-
-    return(0);                  /* we done when 'fractint_main' returns */
-}
-
-
-BOOL InitApplication(hInstance)
-HANDLE hInstance;
+BOOL InitApplication(HINSTANCE hInstance)
 {
     WNDCLASS  wc;
 
@@ -252,17 +202,14 @@ HANDLE hInstance;
     wc.hInstance = hInstance;
     wc.hIcon = NULL;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = GetStockObject(BLACK_BRUSH);
+    wc.hbrBackground = GetStockBrush(BLACK_BRUSH);
     wc.lpszMenuName =  winfract_msg02;
     wc.lpszClassName = winfract_msg03;
 
     return(RegisterClass(&wc) && RegisterMathWindows(hInstance));
 }
 
-
-BOOL InitInstance(hInstance, nCmdShow)
-    HANDLE          hInstance;
-    int             nCmdShow;
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     DWORD WinFlags;
     unsigned int version;
@@ -329,17 +276,6 @@ BOOL InitInstance(hInstance, nCmdShow)
         (HANDLE) hInstance,
         (HWND) hwnd,
         (LPSTR) winfract_title_text);
-
-    /* This program doesn't run in "real" mode, so shut down right
-       now to keep from mucking up Windows */
-    if (!((WinFlags & WF_STANDARD) || (WinFlags & WF_ENHANCED))) {
-        MessageBox (
-            GetFocus(),
-            winfract_msg98,
-            winfract_msg01,
-            MB_ICONSTOP | MB_OK);
-        return(FALSE);
-        }
 
     win_xdots = xdots;
     win_ydots = ydots;
@@ -484,12 +420,28 @@ BOOL InitInstance(hInstance, nCmdShow)
 
 }
 
-void lmemcpy(char huge *to, char huge *from, long len)
+int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-long i;
+    win_lpCmdLine = lpCmdLine;
 
-for (i = 0; i < len; i++)
-  to[i] = from[i];
+    if (!hPrevInstance)
+        if (!InitApplication(hInstance))
+            return (FALSE);
+
+    if (!InitInstance(hInstance, nCmdShow))
+        return (FALSE);
+
+    fractint_main();            /* fire up the main Fractint code */
+    if(htemp_array) {
+        GlobalUnlock(htemp_array);
+        GlobalFree(htemp_array);
+    }
+
+    wintext_destroy();                /* destroy the text window */
+
+    DestroyWindow(hWndCopy);    /* stop everything when it returns */
+
+    return(0);                  /* we done when 'fractint_main' returns */
 }
 
 HWND SecondaryhWnd;
@@ -498,11 +450,7 @@ WPARAM SecondarywParam;
 LPARAM SecondarylParam;
 
 
-LRESULT CALLBACK MainWndProc(hWnd, message, wParam, lParam)
-HWND hWnd;                                /* handle to main window */
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+LRESULT CALLBACK __export MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     RECT tempRect;
@@ -1044,9 +992,7 @@ GlobalExit:
                    break;
 
                 case IDM_ABOUT:
-                    lpProcAbout = MakeProcInstance((FARPROC)About, hInst);
-                    DialogBox(hInst, "AboutBox", hWnd, (DLGPROC)lpProcAbout);
-                    FreeProcInstance(lpProcAbout);
+                    DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                     break;
 
                 /* View menu items */
@@ -1057,9 +1003,7 @@ GlobalExit:
                         break;
                         }
                 case IDS_STATUS:
-                    lpProcStatus = MakeProcInstance((FARPROC)Status, hInst);
-                    DialogBox(hInst, "ShowStatus", hWnd, (DLGPROC)lpProcStatus);
-                    FreeProcInstance(lpProcStatus);
+                    DialogBox(hInst, MAKEINTRESOURCE(IDD_SHOWSTATUS), hWnd, Status);
                     break;
 
                 case IDF_FRACTINTSTYLE:
@@ -1357,45 +1301,23 @@ void SecondaryWndProc(void)
                     if (wParam == IDM_3DOVER || wParam == IDF_3DOVER)
                         lstrcpy(DialogTitle,"File for 3D Overlay Transform");
                     lstrcpy(FileName, readname);
-                    lstrcpy(DefSpec,"*.gif");
                     lstrcpy(DefExt,".gif");
                     Return = Win_OpenFile(FileName);
                     if (Return && (wParam == IDM_3D || wParam == IDM_3DOVER)) {
                         extern int glassestype;
-                        lpSelect3D = MakeProcInstance(
-                            (FARPROC) Select3D, hInst);
-                        Return = DialogBox(hInst, "Select3D",
-                             hWnd, (DLGPROC)lpSelect3D);
-                        FreeProcInstance(lpSelect3D);
+                        Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECT3D), hWnd, Select3D);
                          if (glassestype) {
-                             int Return2;
-                             lpSelectFunnyGlasses = MakeProcInstance(
-                                 (FARPROC) SelectFunnyGlasses, hInst);
-                             Return2 = DialogBox(hInst, "SelectFunnyGlasses",
-                                 hWnd, (DLGPROC)lpSelectFunnyGlasses);
-                             FreeProcInstance(lpSelectFunnyGlasses);
+                             DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFUNNYGLASSES), hWnd, SelectFunnyGlasses);
                              check_funnyglasses_name();
                              }
                         if (Return && !win_3dspherical) {
-                            lpSelect3DPlanar = MakeProcInstance(
-                                (FARPROC) Select3DPlanar, hInst);
-                            Return = DialogBox(hInst, "Select3DPlanar",
-                                 hWnd, (DLGPROC)lpSelect3DPlanar);
-                            FreeProcInstance(lpSelect3DPlanar);
+                            Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECT3DPLANAR), hWnd, Select3DPlanar);
                             }
                         if (Return && win_3dspherical) {
-                            lpSelect3DSpherical = MakeProcInstance(
-                                (FARPROC) Select3DSpherical, hInst);
-                            Return = DialogBox(hInst, "Select3DSpherical",
-                                 hWnd, (DLGPROC)lpSelect3DSpherical);
-                            FreeProcInstance(lpSelect3DSpherical);
+                            Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECT3DSPHERICAL), hWnd, Select3DSpherical);
                             }
                         if (Return && (ILLUMINE || RAY)) {
-                            lpSelectLightSource = MakeProcInstance(
-                                (FARPROC) SelectLightSource, hInst);
-                            Return = DialogBox(hInst, "SelectLightSource",
-                                 hWnd, (DLGPROC)lpSelectLightSource);
-                            FreeProcInstance(lpSelectLightSource);
+                            Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTLIGHTSOURCE), hWnd, SelectLightSource);
                             }
                         }
                     if (Return) {
@@ -1419,7 +1341,6 @@ void SecondaryWndProc(void)
                 case IDM_SAVEAS:
                     lstrcpy(DialogTitle,"File to SaveAs");
                     lstrcpy(FileName, savename);
-                    lstrcpy(DefSpec,"*.gif");
                     lstrcpy(DefExt,".gif");
                     Return = Win_SaveFile(FileName);
                     if (Return)
@@ -1453,7 +1374,6 @@ winfract_loadpar:
                     win_kill_all_zooming();
                     lstrcpy(DialogTitle,"Parameter File to Load");
                     lstrcpy(FileName, CommandFile);
-                    lstrcpy(DefSpec,"*.par");
                     lstrcpy(DefExt,".par");
                     Return = Win_OpenFile(FileName);
                     if (Return) {
@@ -1462,10 +1382,7 @@ winfract_loadpar:
                         get_lsys_name();
                         lstrcpy(DialogTitle,"Parameter Entry to Load");
                         win_choicemade = 0;
-                        lpSelectFractal = MakeProcInstance((FARPROC)SelectFractal, hInst);
-                        Return = DialogBox(hInst, "SelectFractal",
-                            hWnd, (DLGPROC)lpSelectFractal);
-                        FreeProcInstance(lpSelectFractal);
+                        Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFRACTAL), hWnd, SelectFractal);
                         if (Return) {
                             parmfile = fopen(CommandFile,"rb");
                             memcpy((char *)&point,
@@ -1494,16 +1411,12 @@ winfract_loadpar:
                     win_kill_all_zooming();
                     lstrcpy(DialogTitle,"Parameter File to SaveAs");
                     lstrcpy(FileName, CommandFile);
-                    lstrcpy(DefSpec,"*.par");
                     lstrcpy(DefExt,".par");
                     Return = Win_SaveFile(FileName);
                     if (Return) {
                         lstrcpy(LFileName, FileName);
                         lstrcpy(CommandFile, FileName);
-                        lpSelectSavePar = MakeProcInstance((FARPROC)SelectSavePar, hInst);
-                        Return = DialogBox(hInst, "SelectSavePar",
-                             hWnd, (DLGPROC)lpSelectSavePar);
-                        FreeProcInstance(lpSelectSavePar);
+                        Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTSAVEPAR), hWnd, SelectSavePar);
                         }
                     if (Return) {
                         time_to_resume = 1;
@@ -1559,20 +1472,15 @@ julibrot_fudge:                                /* dive in here for Julibrots */
                     CurrentFractal = fractype;
                     for (i = 0; i < win_numchoices; i++) {
                         win_choices[i] = fractalspecific[onthelist[i]].name;
-                        if (onthelist[i] == fractype ||
-                            fractalspecific[onthelist[i]].tofloat == fractype)
+                        if (onthelist[i] == fractype)
                             win_choicemade = i;
                         }
-                    lpSelectFractal = MakeProcInstance((FARPROC)SelectFractal, hInst);
-                    Return = DialogBox(hInst, "SelectFractal",
-                        hWnd, (DLGPROC)lpSelectFractal);
-                    FreeProcInstance(lpSelectFractal);
+                    Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFRACTAL), hWnd, SelectFractal);
                     fchoice = win_choicemade;
                     if (Return && (onthelist[fchoice] == IFS ||
                         onthelist[fchoice] == IFS3D)) {
                         lstrcpy(DialogTitle,"IFS Filename to Load");
                         lstrcpy(FileName, IFSFileName);
-                        lstrcpy(DefSpec,"*.ifs");
                         lstrcpy(DefExt,".ifs");
                         Return = Win_OpenFile(FileName);
                         if (Return) {
@@ -1581,22 +1489,18 @@ julibrot_fudge:                                /* dive in here for Julibrots */
                             get_formula_names();
                             lstrcpy(DialogTitle,"Select an IFS type");
                             win_choicemade = 0;
-                            lpSelectFractal = MakeProcInstance((FARPROC)SelectFractal, hInst);
-                            Return = DialogBox(hInst, "SelectFractal",
-                                hWnd, (DLGPROC)lpSelectFractal);
-                            FreeProcInstance(lpSelectFractal);
+                            Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFRACTAL), hWnd, SelectFractal);
                             if (Return) {
                                 lstrcpy(IFSName, win_choices[win_choicemade]);
                                 Return = ! ifsload();
                                 }
                             }
                         }
-                    if (Return && (onthelist[fchoice] == FORMULA ||
-                        onthelist[fchoice] == FFORMULA)) {
+                    if (Return && (onthelist[fchoice] == FFORMULA))
+                    {
                         /* obtain the formula filename */
                         lstrcpy(DialogTitle,"Formula File to Load");
                         lstrcpy(FileName, FormFileName);
-                        lstrcpy(DefSpec,"*.frm");
                         lstrcpy(DefExt,".frm");
                         Return = Win_OpenFile(FileName);
                         if (Return) {
@@ -1604,10 +1508,7 @@ julibrot_fudge:                                /* dive in here for Julibrots */
                             get_formula_names();
                             lstrcpy(DialogTitle,"Select a Formula");
                             win_choicemade = 0;
-                            lpSelectFractal = MakeProcInstance((FARPROC)SelectFractal, hInst);
-                            Return = DialogBox(hInst, "SelectFractal",
-                                hWnd, (DLGPROC)lpSelectFractal);
-                            FreeProcInstance(lpSelectFractal);
+                            Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFRACTAL), hWnd, SelectFractal);
                             if (Return)
                                 Return = parse_formula_names();
                             }
@@ -1615,7 +1516,6 @@ julibrot_fudge:                                /* dive in here for Julibrots */
                     if (Return && (onthelist[fchoice] == LSYSTEM)) {
                         lstrcpy(DialogTitle,"Lsystem File to Load");
                         lstrcpy(FileName, LFileName);
-                        lstrcpy(DefSpec,"*.l");
                         lstrcpy(DefExt,".l");
                         Return = Win_OpenFile(FileName);
                         if (Return) {
@@ -1623,10 +1523,7 @@ julibrot_fudge:                                /* dive in here for Julibrots */
                             get_lsys_name();
                             lstrcpy(DialogTitle,"Select a Formula");
                             win_choicemade = 0;
-                            lpSelectFractal = MakeProcInstance((FARPROC)SelectFractal, hInst);
-                            Return = DialogBox(hInst, "SelectFractal",
-                                hWnd, (DLGPROC)lpSelectFractal);
-                            FreeProcInstance(lpSelectFractal);
+                            Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFRACTAL), hWnd, SelectFractal);
                             if (Return) {
                                 lstrcpy(LName, win_choices[win_choicemade]);
                                 Return = !LLoad();
@@ -1647,19 +1544,14 @@ julibrot_fudge:                                /* dive in here for Julibrots */
                         CurrentFractal = onthelist[fchoice];
                         curfractalspecific = &fractalspecific[CurrentFractal];
                         if (CurrentFractal == BIFURCATION
-                            || CurrentFractal == LBIFURCATION
                             || CurrentFractal == BIFSTEWART
-                            || CurrentFractal == LBIFSTEWART
                             || CurrentFractal == BIFLAMBDA
-                            || CurrentFractal == LBIFLAMBDA
                             ) set_trig_array(0,"ident");
                         if (CurrentFractal == BIFEQSINPI
-                            || CurrentFractal == LBIFEQSINPI
                             || CurrentFractal == BIFADSINPI
-                            || CurrentFractal == LBIFADSINPI
                             ) set_trig_array(0,"sin");
                         set_default_parms();
-                        if (CurrentFractal == JULIBROT || CurrentFractal == JULIBROTFP) {
+                        if (CurrentFractal == JULIBROTFP) {
                             fractype = CurrentFractal;
                             julibrot = 1;
                                 stackscreen();
@@ -1668,11 +1560,7 @@ julibrot_fudge:                                /* dive in here for Julibrots */
                             unstackscreen();
                             }
                         else {
-                            lpSelectFracParams = MakeProcInstance((FARPROC)SelectFracParams,
-                                hInst);
-                            Return = DialogBox(hInst, "SelectFracParams",
-                                hWnd, (DLGPROC)lpSelectFracParams);
-                            FreeProcInstance(lpSelectFracParams);
+                            Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFRACPARAMS), hWnd, SelectFracParams);
                             }
                         if (! Return) {
                             xxmin = oldxxmin;
@@ -1751,12 +1639,6 @@ julibrot_fudge:                                /* dive in here for Julibrots */
                          if (++historyptr >= maxhistory)
                             historyptr = 0;
                       restore_history_info(historyptr);
-                      if (curfractalspecific->isinteger != 0 &&
-                          curfractalspecific->tofloat != NOFRACTAL)
-                         usr_floatflag = 0;
-                      if (curfractalspecific->isinteger == 0 &&
-                          curfractalspecific->tofloat != NOFRACTAL)
-                         usr_floatflag = 1;
                       historyflag = 1;       /* avoid re-store parms due to rounding errs */
                       win_kill_all_zooming();
                       win_savedac();
@@ -1768,10 +1650,7 @@ julibrot_fudge:                                /* dive in here for Julibrots */
 
                 case IDM_DOODADX:
 winfract_xmenu:
-                        lpSelectDoodads = MakeProcInstance((FARPROC)SelectDoodads, hInst);
-                        Return = DialogBox(hInst, "SelectDoodads",
-                                hWnd, (DLGPROC)lpSelectDoodads);
-                        FreeProcInstance(lpSelectDoodads);
+                        Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTDOODADS), hWnd, SelectDoodads);
                         if (Return) {
                                 win_kill_all_zooming();
                                 win_savedac();
@@ -1783,10 +1662,7 @@ winfract_xmenu:
 
                 case IDM_DOODADY:
 winfract_ymenu:
-                        lpSelectExtended = MakeProcInstance((FARPROC)SelectExtended, hInst);
-                        Return = DialogBox(hInst, "SelectExtended",
-                                hWnd, (DLGPROC)lpSelectExtended);
-                        FreeProcInstance(lpSelectExtended);
+                        Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTEXTENDED), hWnd, SelectExtended);
                         if (Return) {
                                 win_kill_all_zooming();
                                 win_savedac();
@@ -1799,11 +1675,7 @@ winfract_ymenu:
                case IDM_DOODADZ:
 winfract_zmenu:
                     CurrentFractal = fractype;
-                    lpSelectFracParams = MakeProcInstance((FARPROC)SelectFracParams,
-                        hInst);
-                    Return = DialogBox(hInst, "SelectFracParams",
-                        hWnd, (DLGPROC)lpSelectFracParams);
-                    FreeProcInstance(lpSelectFracParams);
+                    Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFRACPARAMS), hWnd, SelectFracParams);
                     if (Return) {
                         win_kill_all_zooming();
                         win_savedac();
@@ -1833,20 +1705,12 @@ winfract_pmenu:
                 case IDM_IFS3D:
                     {
                     extern int glassestype;
-                    lpSelectIFS3D = MakeProcInstance(
-                        (FARPROC) SelectIFS3D, hInst);
-                    Return = DialogBox(hInst, "SelectIFS3D",
-                         hWnd, (DLGPROC)lpSelectIFS3D);
-                    FreeProcInstance(lpSelectIFS3D);
+                    Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTIFS3D), hWnd, SelectIFS3D);
                     if (Return) {
                          win_kill_all_zooming();
                          time_to_restart = 1;
                          if (glassestype) {
-                             lpSelectFunnyGlasses = MakeProcInstance(
-                                 (FARPROC) SelectFunnyGlasses, hInst);
-                             Return = DialogBox(hInst, "SelectFunnyGlasses",
-                                 hWnd, (DLGPROC)lpSelectFunnyGlasses);
-                             FreeProcInstance(lpSelectFunnyGlasses);
+                             Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTFUNNYGLASSES), hWnd, SelectFunnyGlasses);
                              check_funnyglasses_name();
                              }
                          }
@@ -1871,11 +1735,7 @@ winfract_pmenu:
                        break;
                        }
                case IDM_STARFIELD:
-                   lpSelectStarfield = MakeProcInstance(
-                       (FARPROC) SelectStarfield, hInst);
-                   Return = DialogBox(hInst, "Starfield",
-                        hWnd, (DLGPROC)lpSelectStarfield);
-                   FreeProcInstance(lpSelectStarfield);
+                   Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_STARFIELD), hWnd, SelectStarfield);
                    if (Return) {
                        win_kill_all_zooming();
                        time_to_starfield = 1;
@@ -1892,10 +1752,7 @@ winfract_pmenu:
                         }
                 case IDM_IMAGE:
                         win_kill_all_zooming();
-                        lpSelectImage = MakeProcInstance((FARPROC)SelectImage, hInst);
-                        Return = DialogBox(hInst, "SelectImage",
-                                hWnd, (DLGPROC)lpSelectImage);
-                        FreeProcInstance(lpSelectImage);
+                        Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTIMAGE), hWnd, SelectImage);
                         if (Return) {
                                 time_to_restart = 1;
                                 time_to_cycle = 0;
@@ -1961,9 +1818,7 @@ winfract_pmenu:
                         break;
                         }
                 case IDS_STATUS:
-                    lpProcStatus = MakeProcInstance((FARPROC)Status, hInst);
-                    DialogBox(hInst, "ShowStatus", hWnd, (DLGPROC)lpProcStatus);
-                    FreeProcInstance(lpProcStatus);
+                    DialogBox(hInst, MAKEINTRESOURCE(IDD_SHOWSTATUS), hWnd, Status);
                     break;
 
                 /* Colors menu items */
@@ -1987,7 +1842,6 @@ winfract_pmenu:
                     lstrcpy(FileName, MAP_name);
                     if (wParam == IDM_MAPOUT || wParam == IDF_MAPOUT)
                         lstrcpy(FileName, "mymap");
-                    lstrcpy(DefSpec,"*.map");
                     lstrcpy(DefExt,".map");
                     if (wParam == IDM_MAPOUT || wParam == IDF_MAPOUT) {
                         Return = Win_SaveFile(FileName);
@@ -2024,10 +1878,7 @@ winfract_pmenu:
                     if (!win_oktocycle())
                         break;
                     win_kill_all_zooming();
-                    lpSelectCycle = MakeProcInstance((FARPROC)SelectCycle, hInst);
-                    Return = DialogBox(hInst, "SelectCycle",
-                    hWnd, (DLGPROC)lpSelectCycle);
-                    FreeProcInstance(lpSelectCycle);
+                    Return = DialogBox(hInst, MAKEINTRESOURCE(IDD_SELECTCYCLE), hWnd, SelectCycle);
                     break;
 
                 case IDC_EDIT:
@@ -2208,14 +2059,9 @@ HWND hWnd;
         return(0);
         }
     rgb_dib_palette();
-    lmemcpy((char huge *)lpClipboard1, (char huge *)pDibInfo,
-        sizeof(BITMAPINFOHEADER)+colors*sizeof(RGBQUAD)
-        );
-    lpClipboard1 +=
-        (sizeof(BITMAPINFOHEADER))+
-        (colors*sizeof(RGBQUAD));
-    lmemcpy((char huge *)lpClipboard1, (char huge *)pixels,
-        win_bitmapsize);
+    hmemcpy(lpClipboard1, pDibInfo, sizeof(BITMAPINFOHEADER)+colors*sizeof(RGBQUAD));
+    lpClipboard1 += sizeof(BITMAPINFOHEADER) + colors*sizeof(RGBQUAD);
+    hmemcpy(lpClipboard1, pixels, win_bitmapsize);
 
     GlobalUnlock(hClipboard1);
 
@@ -2242,10 +2088,7 @@ HWND hWnd;
     lpClipboard2[1] = 3;
     lpClipboard2[2] = 0;
     lpClipboard2[3] = 1;
-    lmemcpy((char huge *)&lpClipboard2[4],
-        (char huge *)&pDibInfo->bmiColors[0],
-        PALETTESIZE*sizeof(RGBQUAD)
-        );
+    hmemcpy(&lpClipboard2[4], &pDibInfo->bmiColors[0], PALETTESIZE*sizeof(RGBQUAD));
     hClipboard3 = CreatePalette ((LPLOGPALETTE) lpClipboard2);
 
     hDC = GetDC(hWnd);

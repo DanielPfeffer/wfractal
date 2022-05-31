@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "port.h"
 #include "prototyp.h"
 #include "fractype.h"
@@ -136,27 +138,27 @@ void initgene(void) /* set up pointers and mutation params for all usable image
     { &bailoutest, varybotest,  0, "",6 }
   };
   i = -1;
-  far_strcpy(gene[++i].name, s_Param0); /* name of var for menus */
-  far_strcpy(gene[++i].name, s_Param1);
-  far_strcpy(gene[++i].name, s_Param2);
-  far_strcpy(gene[++i].name, s_Param3);
-  far_strcpy(gene[++i].name, s_Param4);
-  far_strcpy(gene[++i].name, s_Param5);
-  far_strcpy(gene[++i].name, s_Param6);
-  far_strcpy(gene[++i].name, s_Param7);
-  far_strcpy(gene[++i].name, s_Param8);
-  far_strcpy(gene[++i].name, s_Param9);
-  far_strcpy(gene[++i].name, s_inside);
-  far_strcpy(gene[++i].name, s_outside);
-  far_strcpy(gene[++i].name, s_decomp);
-  far_strcpy(gene[++i].name, s_invertr);
-  far_strcpy(gene[++i].name, s_invertx);
-  far_strcpy(gene[++i].name, s_inverty);
-  far_strcpy(gene[++i].name, s_trigfn1);
-  far_strcpy(gene[++i].name, s_trigfn2);
-  far_strcpy(gene[++i].name, s_trigfn3);
-  far_strcpy(gene[++i].name, s_trigfn4);
-  far_strcpy(gene[++i].name, s_botest);
+  _fstrcpy(gene[++i].name, s_Param0); /* name of var for menus */
+  _fstrcpy(gene[++i].name, s_Param1);
+  _fstrcpy(gene[++i].name, s_Param2);
+  _fstrcpy(gene[++i].name, s_Param3);
+  _fstrcpy(gene[++i].name, s_Param4);
+  _fstrcpy(gene[++i].name, s_Param5);
+  _fstrcpy(gene[++i].name, s_Param6);
+  _fstrcpy(gene[++i].name, s_Param7);
+  _fstrcpy(gene[++i].name, s_Param8);
+  _fstrcpy(gene[++i].name, s_Param9);
+  _fstrcpy(gene[++i].name, s_inside);
+  _fstrcpy(gene[++i].name, s_outside);
+  _fstrcpy(gene[++i].name, s_decomp);
+  _fstrcpy(gene[++i].name, s_invertr);
+  _fstrcpy(gene[++i].name, s_invertx);
+  _fstrcpy(gene[++i].name, s_inverty);
+  _fstrcpy(gene[++i].name, s_trigfn1);
+  _fstrcpy(gene[++i].name, s_trigfn2);
+  _fstrcpy(gene[++i].name, s_trigfn3);
+  _fstrcpy(gene[++i].name, s_trigfn4);
+  _fstrcpy(gene[++i].name, s_botest);
 
   if (gene_handle == 0)
      gene_handle = MemoryAlloc((U16)sizeof(gene),1L,FARMEM);
@@ -358,7 +360,7 @@ void varyinv(GENEBASE gene[], int randval, int i)
 
 #define LOADCHOICES(X)     {\
    static FCODE tmp[] = { X };\
-   far_strcpy(ptr,(char far *)tmp);\
+   _fstrcpy(ptr, tmp);\
    choices[++k]= ptr;\
    ptr += sizeof(tmp);\
    }
@@ -382,13 +384,13 @@ int get_the_rest(void)
   struct fullscreenvalues uvalues[20];
   GENEBASE gene[NUMGENES];
 
-  far_strcpy(hdg,o_hdg);
+  _fstrcpy(hdg, o_hdg);
   ptr = (char far *)MK_FP(extraseg,0);
 
    MoveFromMemory((BYTE *)&gene, (U16)sizeof(gene), 1L, 0L, gene_handle);
 
    numtrig = (curfractalspecific->flags >> 6) & 7;
-   if(fractype==FORMULA || fractype==FFORMULA ) {
+   if(fractype==FFORMULA ) {
       numtrig = maxfn;
       }
 
@@ -483,12 +485,12 @@ int get_variations(void)
   int lastparm  = MAXPARAMS;
   int chngd = -1;
 
-  far_strcpy(hdg,o_hdg);
+  _fstrcpy(hdg, o_hdg);
   ptr = (char far *)MK_FP(extraseg,0);
 
    MoveFromMemory((BYTE *)&gene, (U16)sizeof(gene), 1L, 0L, gene_handle);
 
-   if(fractype == FORMULA || fractype == FFORMULA) {
+   if(fractype == FFORMULA) {
       if(uses_p1)  /* set first parameter */
          firstparm = 0;
       else if(uses_p2)
@@ -516,7 +518,7 @@ int get_variations(void)
    for (i = firstparm; i < lastparm; i++)
    {
       if (typehasparm(julibrot?neworbittype:fractype,i,NULL)==0) {
-         if(fractype == FORMULA || fractype == FFORMULA)
+         if(fractype == FFORMULA)
            if(paramnotused(i))
               continue;
          break;
@@ -524,14 +526,14 @@ int get_variations(void)
       numparams++;
    }
 
-   if (fractype != FORMULA && fractype != FFORMULA)
+   if (fractype != FFORMULA)
       lastparm = numparams;
 
 choose_vars_restart:
 
    k = -1;
    for (num = firstparm; num < lastparm; num++) {
-      if(fractype == FORMULA || fractype == FFORMULA)
+      if(fractype == FFORMULA)
         if(paramnotused(num))
            continue;
       choices[++k]=gene[num].name;
@@ -582,7 +584,7 @@ choose_vars_restart:
    /* read out values */
    k = -1;
    for (num = firstparm; num < lastparm; num++) {
-      if(fractype == FORMULA || fractype == FFORMULA)
+      if(fractype == FFORMULA)
         if(paramnotused(num))
            continue;
       gene[num].mutate = (char)(uvalues[++k].uval.ch.val);
@@ -636,7 +638,7 @@ int get_evolve_Parms(void)
 
 get_evol_restart:
 
-   far_strcpy(hdg,o_hdg);
+   _fstrcpy(hdg, o_hdg);
    ptr = (char far *)MK_FP(extraseg,0);
    if ((evolving & RANDWALK)||(evolving & RANDPARAM)) {
    /* adjust field param to make some sense when changing from random modes*/

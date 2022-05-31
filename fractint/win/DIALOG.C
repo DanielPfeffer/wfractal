@@ -4,15 +4,19 @@
 
 */
 
+#include <string.h>
+
 #define STRICT
+#include <windows.h>
+#include <windowsx.h>
+#include <commdlg.h>
+
+#include <direct.h>
+
+#include "resource.h"
 
 #include "port.h"
 #include "prototyp.h"
-
-#include <windows.h>
-#include <commdlg.h>
-#include <string.h>
-#include <direct.h>
 
 #include "winfract.h"
 #include "dialog.h"
@@ -21,7 +25,8 @@
 #include "profile.h"
 
 #if defined(__BORLANDC__)
-static int _getcwd(char* dir, int len)
+#include <dir.h>
+static char* _getcwd(char* dir, int len)
 {
     return getcwd(dir, len);
 }
@@ -91,11 +96,7 @@ char far about_msg08[] = "Distribution of Winfract by BBS, network, and";
 char far about_msg09[] = "software shareware distributors, etc. is encouraged.";
 char far about_msg10[] = "";
 
-BOOL CALLBACK About(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
 extern char far winfract_title_text[];
@@ -131,11 +132,7 @@ char about_msg00[80];
 }
 
 
-BOOL CALLBACK Status(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export Status(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 char tempstring[100];
 char parstr0[100], parstr1[100], parstr2[100], parstr3[100];
@@ -212,11 +209,7 @@ char parstr0[100], parstr1[100], parstr2[100], parstr3[100];
 }
 
 
-BOOL CALLBACK SelectFractal(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectFractal(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i;
@@ -275,11 +268,7 @@ okay:
 }
 
 
-BOOL CALLBACK SelectFracParams(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectFracParams(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i, j;
@@ -291,10 +280,6 @@ LPARAM lParam;
 
         case WM_INITDIALOG:
                 curtype = CurrentFractal;
-                if (curfractalspecific->name[0] == '*'
-                   && (i = curfractalspecific->tofloat) != NOFRACTAL  /* FIXED BUG HERE!! */
-                   && fractalspecific[i].name[0] != '*')
-                      curtype = i;
                 curfractalspecific = &fractalspecific[curtype];
                 win_temp1 = curtype;
                 SetDlgItemText(hDlg, ID_FRACNAME,   fractalspecific[win_temp1].name);
@@ -427,11 +412,7 @@ LPARAM lParam;
 }
 
 
-BOOL CALLBACK SelectImage(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectImage(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i;
@@ -447,10 +428,8 @@ LPARAM lParam;
                 CheckDlgButton(hDlg, ID_ICOLORS2, 1);
             else
                 CheckDlgButton(hDlg, ID_ICOLORS3, 1);
-            sprintf(temp,"%d",xdots);
-            SetDlgItemText(hDlg, ID_ISIZEX, temp);
-            sprintf(temp,"%d",ydots);
-            SetDlgItemText(hDlg, ID_ISIZEY, temp);
+            SetDlgItemInt(hDlg, ID_ISIZEX, xdots, FALSE);
+            SetDlgItemInt(hDlg, ID_ISIZEY, ydots, FALSE);
             i = ID_ISIZE7;
             if (xdots ==  200 && ydots == 150) i = ID_ISIZE1;
             if (xdots ==  320 && ydots == 200) i = ID_ISIZE2;
@@ -570,11 +549,7 @@ LPARAM lParam;
 }
 
 
-BOOL CALLBACK SelectDoodads(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectDoodads(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     char temp[80];
@@ -613,18 +588,13 @@ LPARAM lParam;
             oldmaxiter = maxiter;
             sprintf(temp,"%ld",maxiter);
             SetDlgItemText(hDlg, ID_MAXIT, temp);
-            sprintf(temp,"%d",usr_biomorph);
-            SetDlgItemText(hDlg, ID_BIOMORPH, temp);
+            SetDlgItemInt(hDlg, ID_BIOMORPH, usr_biomorph, TRUE);
             sprintf(temp,"%ld",LogFlag);
             SetDlgItemText(hDlg, ID_LOGP, temp);
-            sprintf(temp,"%d",decomp[0]);
-            SetDlgItemText(hDlg, ID_DECOMP, temp);
-            sprintf(temp,"%d",fillcolor);
-            SetDlgItemText(hDlg, ID_FILLC, temp);
-            sprintf(temp,"%d",max(inside,0));
-            SetDlgItemText(hDlg, ID_INSIDE, temp);
-            sprintf(temp,"%d",max(outside,0));
-            SetDlgItemText(hDlg, ID_OUTSIDE, temp);
+            SetDlgItemInt(hDlg, ID_DECOMP, decomp[0], TRUE);
+            SetDlgItemInt(hDlg, ID_FILLC, fillcolor, TRUE);
+            SetDlgItemInt(hDlg, ID_INSIDE, max(inside,0), FALSE);
+            SetDlgItemInt(hDlg, ID_OUTSIDE, max(outside,0), FALSE);
             return (TRUE);
 
         case WM_COMMAND:
@@ -746,11 +716,7 @@ LPARAM lParam;
 }
 
 
-BOOL CALLBACK SelectExtended(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectExtended(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
    char temp[80];
    int i;
@@ -758,14 +724,11 @@ LPARAM lParam;
     switch (message) {
 
         case WM_INITDIALOG:
-            sprintf(temp,"%i",finattract);
-            SetDlgItemText(hDlg, ID_FINITE, temp);
-            sprintf(temp,"%i",(int)potparam[0]);
-            SetDlgItemText(hDlg, ID_POTENTMAX, temp);
+            SetDlgItemInt(hDlg, ID_FINITE, finattract, TRUE);
+            SetDlgItemInt(hDlg, ID_POTENTMAX, potparam[0], TRUE);
             sprintf(temp,"%.12f",potparam[1]);
             SetDlgItemText(hDlg, ID_POTENTSLOPE, temp);
-            sprintf(temp,"%i",(int)potparam[2]);
-            SetDlgItemText(hDlg, ID_POTENTBAIL, temp);
+            SetDlgItemInt(hDlg, ID_POTENTBAIL, potparam[2], TRUE);
             if (pot16bit)
                 win_temp2 = 1;
             else
@@ -773,8 +736,7 @@ LPARAM lParam;
             CheckDlgButton(hDlg, ID_POTENT16, win_temp2);
             sprintf(temp,"%ld",usr_distest);
             SetDlgItemText(hDlg, ID_DISTEST, temp);
-            sprintf(temp,"%i",distestwidth);
-            SetDlgItemText(hDlg, ID_DISTESTWID, temp);
+            SetDlgItemInt(hDlg, ID_DISTESTWID, distestwidth, TRUE);
             for (i = 0; i < 3; i++) {
                 sprintf(temp,"%.12f",inversion[i]);
                 if (inversion[i] == AUTOINVERT)
@@ -782,10 +744,8 @@ LPARAM lParam;
                 else
                     SetDlgItemText(hDlg, ID_INVERTRAD+i, temp);
                 }
-            sprintf(temp,"%i",rotate_lo);
-            SetDlgItemText(hDlg, ID_COLORMIN, temp);
-            sprintf(temp,"%i",rotate_hi);
-            SetDlgItemText(hDlg, ID_COLORMAX, temp);
+            SetDlgItemInt(hDlg, ID_COLORMIN, rotate_lo, TRUE);
+            SetDlgItemInt(hDlg, ID_COLORMAX, rotate_hi, TRUE);
             win_oldprompts[0] = finattract;
             win_oldprompts[1] = potparam[0];
             win_oldprompts[2] = potparam[1];
@@ -868,11 +828,7 @@ LPARAM lParam;
 
 extern char far par_comment[4][MAXCMT];
 
-BOOL CALLBACK SelectSavePar(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectSavePar(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
    char temp[80];
    int i;
@@ -915,8 +871,7 @@ LPARAM lParam;
             SetDlgItemText(hDlg, ID_PCOM3, CommandComment[2]);
             SetDlgItemText(hDlg, ID_PCOM4, CommandComment[3]);
             CheckDlgButton(hDlg, ID_PCOL1+win_temp1, 1);
-            sprintf(temp,"%i",win_temp2);
-            SetDlgItemText(hDlg, ID_PCNUM, temp);
+            SetDlgItemInt(hDlg, ID_PCNUM, win_temp2, TRUE);
             if (colorstate == 2)
                 SetDlgItemText(hDlg, ID_PCFILE, colorfile);
             return (TRUE);
@@ -957,11 +912,7 @@ LPARAM lParam;
 int win_cycledir = -1, win_cyclerand = 0, win_cyclefreq = 0, win_cycledelay = 0;
 int win_tempcycle, win_tempcycledir, win_tempcyclerand, win_tempcyclefreq;
 
-BOOL CALLBACK SelectCycle(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectCycle(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
 
@@ -1057,114 +1008,7 @@ LPARAM lParam;
     return (FALSE);
 }
 
-FARPROC lpSelectFullScreen;
-
 extern HANDLE hInst;
-
-int win_fullscreen_count;
-char * far win_fullscreen_prompts[20];
-char *win_fullscreen_heading;
-static struct fullscreenvalues win_fullscreen_values[20];
-
-int xxx_fullscreen_prompt(        /* full-screen prompting routine */
-        char *hdg,                /* heading, lines separated by \n */
-        int numprompts,         /* there are this many prompts (max) */
-        char * far *prompts,        /* array of prompting pointers */
-        struct fullscreenvalues values[], /* array of values */
-        int options,                /* future use bits in case we need them */
-        int fkeymask                /* bit n on if Fn to cause return */
-        )
-{
-int i;
-int Return;
-
-win_fullscreen_count = numprompts;
-win_fullscreen_heading = hdg;
-win_fullscreen_count = numprompts;
-for (i = 0; i < win_fullscreen_count; i++) {
-   win_fullscreen_prompts[i] = prompts[i];
-   win_fullscreen_values[i]  = values[i];
-   }
-
-lpSelectFullScreen = MakeProcInstance((FARPROC)SelectFullScreen, hInst);
-Return = DialogBox(hInst, "SelectFullScreen", hwnd, (DLGPROC)lpSelectFullScreen);
-FreeProcInstance(lpSelectFullScreen);
-
-if (Return) {
-    for (i = 0; i < win_fullscreen_count; i++) {
-        values[i] = win_fullscreen_values[i];
-    }
-    return(0);
-    }
-
-return(-1);
-}
-
-BOOL CALLBACK SelectFullScreen(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
-{
-
-    int i;
-    char temp[80];
-
-    switch (message) {
-
-        case WM_INITDIALOG:
-            SetDlgItemText(hDlg, ID_PROMPT00,win_fullscreen_heading);
-            for (i = 0; i < win_fullscreen_count; i++) {
-                SetDlgItemText(hDlg, ID_PROMPT01+i,win_fullscreen_prompts[i]);
-                if (win_fullscreen_values[i].type == 'd' ||
-                    win_fullscreen_values[i].type == 'f')
-                    sprintf(temp,"%10.5f",win_fullscreen_values[i].uval.dval);
-                else if(win_fullscreen_values[i].type == 'i')
-                    sprintf(temp,"%d",win_fullscreen_values[i].uval.ival);
-                else if(win_fullscreen_values[i].type == 's')
-                {
-                    strncpy(temp,win_fullscreen_values[i].uval.sval,16);
-                    temp[15] = 0;
-                }
-                else if(win_fullscreen_values[i].type == 'l')
-                    strcpy(temp,win_fullscreen_values[i].uval.ch.list[win_fullscreen_values[i].uval.ch.val]);
-                else
-                    strcpy(temp,win_fullscreen_values[i].uval.sval);
-                SetDlgItemText(hDlg, ID_ANSWER01+i,temp);
-                }
-            return (TRUE);
-
-        case WM_COMMAND:
-            switch (wParam) {
-
-                case IDOK:
-                    for (i = 0; i < win_fullscreen_count; i++) {
-                        GetDlgItemText(hDlg, ID_ANSWER01+i , temp, 20);
-                        if (win_fullscreen_values[i].type == 'd' ||
-                            win_fullscreen_values[i].type == 'f')
-                            win_fullscreen_values[i].uval.dval = atof(temp);
-                        else if(win_fullscreen_values[i].type == 'i')
-                            win_fullscreen_values[i].uval.ival = atoi(temp);
-                        else if(win_fullscreen_values[i].type == 's')
-                            strncpy(win_fullscreen_values[i].uval.sval,temp,16);
-                        else if(win_fullscreen_values[i].type == 'l')
-                            strcpy(win_fullscreen_values[i].uval.ch.list[win_fullscreen_values[i].uval.ch.val],temp);
-                        else
-                            strcpy(win_fullscreen_values[i].uval.sval,temp);
-                    }
-                    EndDialog(hDlg, 1);
-                    break;
-
-                case IDCANCEL:
-                    EndDialog(hDlg, 0);
-                    break;
-
-                }
-
-        }
-    return (FALSE);
-}
-
 
 extern int init3d[];
 extern int win_3dspherical;
@@ -1186,11 +1030,7 @@ extern int eyeseparation;
 
 static int far win_answers[20];
 
-BOOL CALLBACK Select3D(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export Select3D(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i;
@@ -1215,8 +1055,7 @@ LPARAM lParam;
 /*
             CheckDlgButton(hDlg, ID_TARGA, win_answers[8]);
 */
-            sprintf(temp,"%d",win_answers[3]);
-            SetDlgItemText(hDlg, ID_PREVIEWFACTOR, temp);
+            SetDlgItemInt(hDlg, ID_PREVIEWFACTOR, win_answers[3], TRUE);
             CheckRadioButton(hDlg, ID_STEREO1, ID_STEREO4,
                 ID_STEREO1+win_answers[4]);
             CheckRadioButton(hDlg, ID_FILL1, ID_FILL8,
@@ -1329,11 +1168,7 @@ LPARAM lParam;
     return (FALSE);
 }
 
-BOOL CALLBACK Select3DPlanar(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export Select3DPlanar(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i;
@@ -1358,8 +1193,7 @@ LPARAM lParam;
             win_answers[13] = transparent[1];
             win_answers[14] = RANDOMIZE;
             for (i = 0; i < 15; i++) {
-                sprintf(temp,"%d", win_answers[i]);
-                SetDlgItemText(hDlg, ID_ANS1+i,temp);
+                SetDlgItemInt(hDlg, ID_ANS1+i, win_answers[i], TRUE);
                 }
             return (TRUE);
 
@@ -1402,11 +1236,7 @@ LPARAM lParam;
 }
 
 
-BOOL CALLBACK SelectIFS3D(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectIFS3D(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i, numanswers;
@@ -1424,10 +1254,10 @@ LPARAM lParam;
             win_answers[4] = XSHIFT;
             win_answers[5] = YSHIFT;
             win_answers[6] = glassestype;
-            for (i = 0; i <= numanswers; i++) {
-                sprintf(temp,"%d", win_answers[i]);
-                SetDlgItemText(hDlg, ID_ANS1+i,temp);
-                }
+            for (i = 0; i <= numanswers; i++)
+            {
+                SetDlgItemInt(hDlg, ID_ANS1+i, win_answers[i], TRUE);
+            }
             CheckRadioButton(hDlg, ID_STEREO1, ID_STEREO4,
                 ID_STEREO1+win_answers[6]);
             return (TRUE);
@@ -1472,11 +1302,7 @@ LPARAM lParam;
 
 char win_funnyglasses_map_name[41];
 
-BOOL CALLBACK SelectFunnyGlasses(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectFunnyGlasses(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i, numanswers;
@@ -1492,7 +1318,7 @@ LPARAM lParam;
             if(ZVIEWER == 0)
                ZVIEWER = 150;
             if(eyeseparation == 0) {
-               if(fractype==IFS3D || fractype==LLORENZ3D || fractype==FPLORENZ3D) {
+               if(fractype==IFS3D || fractype==FPLORENZ3D) {
                        eyeseparation =  2;
                   xadjust       = -2;
                   }
@@ -1520,10 +1346,10 @@ LPARAM lParam;
             win_answers[5] = blue_crop_right;
             win_answers[6] = red_bright;
             win_answers[7] = blue_bright;
-            for (i = 0; i < numanswers+1;i++) {
-                sprintf(temp,"%d", win_answers[i]);
-                SetDlgItemText(hDlg, ID_ANS1+i,temp);
-                }
+            for (i = 0; i < numanswers+1;i++)
+            {
+                SetDlgItemInt(hDlg, ID_ANS1+i, win_answers[i], TRUE);
+            }
             SetDlgItemText(hDlg, ID_ANS9,win_funnyglasses_map_name);
             return (TRUE);
 
@@ -1558,11 +1384,7 @@ LPARAM lParam;
     return (FALSE);
 }
 
-BOOL CALLBACK SelectLightSource(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectLightSource(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i, numanswers;
@@ -1579,8 +1401,7 @@ LPARAM lParam;
             win_answers[3] = LIGHTAVG;
             win_answers[4] = Ambient;
             for (i = 0; i < numanswers+1;i++) {
-                sprintf(temp,"%d", win_answers[i]);
-                SetDlgItemText(hDlg, ID_ANS1+i,temp);
+                SetDlgItemInt(hDlg, ID_ANS1+i, win_answers[i], TRUE);
                 }
             return (TRUE);
 
@@ -1610,11 +1431,7 @@ LPARAM lParam;
     return (FALSE);
 }
 
-BOOL CALLBACK Select3DSpherical(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export Select3DSpherical(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     int i;
@@ -1638,10 +1455,10 @@ LPARAM lParam;
             win_answers[12] = transparent[0];
             win_answers[13] = transparent[1];
             win_answers[14] = RANDOMIZE;
-            for (i = 0; i < 15; i++) {
-                sprintf(temp,"%d", win_answers[i]);
-                SetDlgItemText(hDlg, ID_ANS1+i,temp);
-                }
+            for (i = 0; i < 15; i++)
+            {
+                SetDlgItemInt(hDlg, ID_ANS1+i, win_answers[i], TRUE);
+            }
             return (TRUE);
 
         case WM_COMMAND:
@@ -1682,11 +1499,7 @@ LPARAM lParam;
     return (FALSE);
 }
 
-BOOL CALLBACK SelectStarfield(hDlg, message, wParam, lParam)
-HWND hDlg;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+BOOL CALLBACK __export SelectStarfield(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 extern double starfield_values[4];
 
@@ -1721,7 +1534,6 @@ extern double starfield_values[4];
 extern int time_to_save;
 extern int gif87a_flag;
 int FileFormat = 0;
-FARPROC lpStatusBox = NULL;
 HWND hStatusBox;
 BOOL OperCancelled;
 char far StatusTitle[80];
@@ -1730,8 +1542,7 @@ extern LPBITMAPINFO pDibInfo;
 extern char huge *pixels;
 extern LPLOGPALETTE pLogPal;
 
-BOOL CALLBACK StatusBoxProc(HWND hDlg, UINT Msg, WPARAM wParam,
-                LPARAM lParam)
+BOOL CALLBACK __export StatusBoxProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
    char PerStr[10];
    RECT Rect, TextRect;
@@ -1765,15 +1576,14 @@ BOOL CALLBACK StatusBoxProc(HWND hDlg, UINT Msg, WPARAM wParam,
 
          /* Calculate Percentage */
          hBarDC = GetDC(hBar);
-         Percent = (unsigned)((lParam * 100) / wParam);
+         Percent = MulDiv(lParam, 100, wParam);
          if(Percent <= 100)
          {
-            wsprintf(PerStr, "%d", Percent);
-            strcat(PerStr, "%");
+            wsprintf(PerStr, "%d%%", Percent);
 
             /* Display Bar */
             Rect = TextRect;
-            Rect.right = (unsigned)((((long)Percent) * Rect.right) / 100);
+            Rect.right = MulDiv(Percent, Rect.right, 100);
             Rect.top += 2;
             Rect.bottom -= 2;
             Rectangle(hBarDC, Rect.left, Rect.top, Rect.right, Rect.bottom);
@@ -1797,9 +1607,7 @@ BOOL CALLBACK StatusBoxProc(HWND hDlg, UINT Msg, WPARAM wParam,
 
 void OpenStatusBox(HWND hWnd, HANDLE hInst)
 {
-   if(lpStatusBox == NULL)
-      lpStatusBox = MakeProcInstance((FARPROC)StatusBoxProc, hInst);
-   hStatusBox = CreateDialog(hInst, "StatusBox", hWnd, (DLGPROC)lpStatusBox);
+   hStatusBox = CreateDialog(hInst, "StatusBox", hWnd, StatusBoxProc);
 }
 
 void CloseStatusBox(void)
@@ -2090,11 +1898,10 @@ return i;
 
 }
 
-static PRINTDLG pd;
 static BOOL print_abort_flag;
 static HWND print_abort_dialog;
 
-int CALLBACK PrintAbortDlg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+int CALLBACK __export PrintAbortDlg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_COMMAND) { /* Cancel button (Enter, Esc, Return, Space) */
         print_abort_flag = TRUE;
@@ -2109,7 +1916,7 @@ int CALLBACK PrintAbortDlg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return (FALSE);
 }
 
-int CALLBACK PrintAbort(HDC hPr, int Code)
+int CALLBACK __export PrintAbort(HDC hPr, int Code)
 {
     MSG msg;
     while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -2120,87 +1927,76 @@ int CALLBACK PrintAbort(HDC hPr, int Code)
     return (! print_abort_flag); /* return FALSE iff aborted */
 }
 
-void PrintFile(void)
-{
-int printer_xdots, printer_ydots;
-float aspect;
 extern int win_xdots, win_ydots;
 extern int pixelshift_per_byte;
 extern int bytes_per_pixelline;
 
-    /* initialize the structure */
-    memset(&pd, 0, sizeof(pd));
-    pd.lStructSize = sizeof(pd);
-    pd.hwndOwner = (HWND)NULL;
-    pd.Flags = PD_RETURNDC | PD_NOPAGENUMS | PD_NOSELECTION | PD_PRINTSETUP;
+void PrintFile(void)
+{
+   PRINTDLG pd;
 
-    if (PrintDlg(&pd) == TRUE) {
-        int printer_bandable;
-        long firstpixel;
-        RECT printerRect;
-        FARPROC p_print_abort;
-        FARPROC p_pabort_dialog;
-        int more;
+   memset(&pd, 0, sizeof(pd));
+   pd.lStructSize = sizeof(pd);
+   pd.hwndOwner = (HWND)NULL;
+   pd.Flags = PD_RETURNDC | PD_NOPAGENUMS | PD_NOSELECTION | PD_PRINTSETUP;
 
-        print_abort_flag = FALSE;
+   if (PrintDlg(&pd) == TRUE)
+   {
+      DOCINFO di;
+      int printer_xdots, printer_ydots;
+      float aspect;
+      long firstpixel;
 
-        printer_bandable = GetDeviceCaps(pd.hDC,RASTERCAPS) & RC_BANDING;
+      print_abort_flag = FALSE;
 
-        if (GetDeviceCaps(pd.hDC,NUMCOLORS) <= 2)
-            mono_dib_palette();        /* B&W stripes for B&W printers */
-        else
-            rgb_dib_palette();
+      if (GetDeviceCaps(pd.hDC,NUMCOLORS) <= 2)
+          mono_dib_palette();        /* B&W stripes for B&W printers */
+      else
+          rgb_dib_palette();
 
-        printer_xdots = GetDeviceCaps(pd.hDC,HORZRES);
-        printer_ydots = GetDeviceCaps(pd.hDC,VERTRES);
-        aspect = (float)((((1.0 * printer_ydots) / printer_xdots) * xdots) / ydots);
-        if (aspect > 1.0) printer_ydots = (int)(printer_ydots / aspect);
-        if (aspect < 1.0) printer_xdots = (int)(printer_xdots / aspect);
+      printer_xdots = GetDeviceCaps(pd.hDC,HORZRES);
+      printer_ydots = GetDeviceCaps(pd.hDC,VERTRES);
+      aspect = (float)((((1.0 * printer_ydots) / printer_xdots) * xdots) / ydots);
+      if (aspect > 1.0) printer_ydots = (int)(printer_ydots / aspect);
+      if (aspect < 1.0) printer_xdots = (int)(printer_xdots / aspect);
 
-        firstpixel = win_ydots - ydots;
-        firstpixel = firstpixel * bytes_per_pixelline;
+      firstpixel = win_ydots - ydots;
+      firstpixel = firstpixel * bytes_per_pixelline;
 
-        p_print_abort  = MakeProcInstance((FARPROC)PrintAbort,    hInst);
-        p_pabort_dialog = MakeProcInstance((FARPROC)PrintAbortDlg, hInst);
-        print_abort_dialog = CreateDialog(hInst, "Printabort", hwnd, (DLGPROC)p_pabort_dialog);
-        ShowWindow(print_abort_dialog, SW_NORMAL);
-        UpdateWindow(print_abort_dialog);
-        EnableWindow(hwnd, FALSE);
-        Escape (pd.hDC, SETABORTPROC, 0, (LPSTR)p_print_abort, NULL);
+      print_abort_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_PRINTABORT), hwnd, PrintAbortDlg);
+      ShowWindow(print_abort_dialog, SW_NORMAL);
+      UpdateWindow(print_abort_dialog);
+      EnableWindow(hwnd, FALSE);
+      SetAbortProc(pd.hDC, PrintAbort);
 
-        Escape(pd.hDC, STARTDOC,  17, (LPSTR)"Winfract Printout", NULL);
+      di.cbSize = sizeof(di);
+      di.lpszDocName = "Winfract Printout";
+      di.lpszOutput = NULL;
+      StartDoc(pd.hDC, &di);
 
-        if (printer_bandable)
-                Escape(pd.hDC, NEXTBAND, 0, (LPSTR) NULL, (LPSTR) &printerRect);
-
-        more = 1;
-        while (more) {
-            if (printer_bandable)
-                DPtoLP(pd.hDC, (LPPOINT) &printerRect, 2);
-            StretchDIBits(pd.hDC,
+      StartPage(pd.hDC);
+      StretchDIBits(pd.hDC,
                 0, 0,
                 printer_xdots, printer_ydots,
                 0, 0,
                 xdots, ydots,
                 (LPSTR)&pixels[firstpixel], (LPBITMAPINFO)pDibInfo,
                 DIB_RGB_COLORS, SRCCOPY);
-               if (printer_bandable)
-                Escape(pd.hDC, NEXTBAND, 0, (LPSTR) NULL, (LPSTR) &printerRect);
-            more = ! (IsRectEmpty(&printerRect));
-            if (print_abort_flag) more = FALSE;
-            }
-        Escape(pd.hDC, NEWFRAME, 0, NULL, NULL);
-        Escape(pd.hDC, ENDDOC, 0, NULL, NULL );
+      EndPage(pd.hDC);
 
-        EnableWindow(hwnd, TRUE);
-        DestroyWindow(print_abort_dialog);
-        FreeProcInstance(p_print_abort);
-        FreeProcInstance(p_pabort_dialog);
-        DeleteDC(pd.hDC);
-        if (pd.hDevMode)
-            GlobalFree(pd.hDevMode);
-        if (pd.hDevNames)
-            GlobalFree(pd.hDevNames);
-    }
-    default_dib_palette();   /* replace the palette */
+      if (print_abort_flag)
+          AbortDoc(pd.hDC);
+      else
+          EndDoc(pd.hDC);
+
+      EnableWindow(hwnd, TRUE);
+      DestroyWindow(print_abort_dialog);
+      DeleteDC(pd.hDC);
+      if (pd.hDevMode)
+         GlobalFree(pd.hDevMode);
+      if (pd.hDevNames)
+           GlobalFree(pd.hDevNames);
+   }
+   default_dib_palette();   /* replace the palette */
 }
+

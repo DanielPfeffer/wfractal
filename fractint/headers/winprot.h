@@ -36,8 +36,6 @@ extern int keypressed(void);
 extern int getakey(void);
 extern int  farread(int, VOIDFARPTR, unsigned);
 extern int  farwrite(int, VOIDFARPTR, unsigned);
-extern void far_memcpy(void far *, void far *, int);
-extern void far_memset(void far *, int , int);
 extern int getcolor(int, int);
 extern int out_line(BYTE *, int);
 extern void putcolor_a (int, int, int);
@@ -65,12 +63,6 @@ extern void win_cycle(void);
 
 extern void far * cdecl farmemalloc(long);
 extern void farmemfree(void far *);
-extern int far_memcmp(void far *, void far *, int);
-extern int far_strlen (char far *);
-extern void far_strcpy (char far *, char far *);
-extern int far_strcmp (char far *, char far *);
-extern int far_strnicmp (char far *, char far *, int);
-extern void far_strcat (char far *, char far *);
 
 extern void winfract_help(void);
 

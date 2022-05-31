@@ -2,11 +2,14 @@
         encoder.c - GIF Encoder and associated routines
 */
 
-#include <string.h>
 #include <limits.h>
+#include <string.h>
+
 #ifndef XFRACT
 #include <io.h>
 #endif
+#include <mem.h>
+
   /* see Fractint.c for a description of the "include"  hierarchy */
 #include "port.h"
 #include "prototyp.h"
@@ -131,7 +134,7 @@ restart:
       i = strlen(tmpfile);
       while (--i >= 0 && tmpfile[i] != SLASHC)
          tmpfile[i] = 0;
-      far_strcat(tmpfile, fractint_tmp);
+      _fstrcat(tmpfile, fractint_tmp);
    }
 
    started_resaves = (resave_flag == 1) ? 1 : 0;
@@ -192,9 +195,9 @@ restart:
       char buf[200];
       sprintf(buf, "Save of %s interrupted.\nCancel to ", openfile);
       if (newfile)
-         far_strcat(buf,s_delete);
+         _fstrcat(buf, s_delete);
       else
-         far_strcat(buf,s_retain);
+         _fstrcat(buf, s_retain);
       interrupted = 1;
       if (stopmsg(2, buf) < 0)
       {
@@ -436,8 +439,8 @@ int encoder()
       }
 /* save_info.fractal_type gets modified in setup_save_info() in float only
    version, so we need to use fractype.  JCO 06JAN01 */
-/*    if (save_info.fractal_type == FORMULA || save_info.fractal_type == FFORMULA) */
-      if (fractype == FORMULA || fractype == FFORMULA)
+/*    if (save_info.fractal_type == FFORMULA) */
+      if (fractype == FFORMULA)
            save_info.tot_extend_len += store_item_name(FormName);
 /*    if (save_info.fractal_type == LSYSTEM) */
       if (fractype == LSYSTEM)
@@ -632,7 +635,7 @@ static int _fastcall store_item_name(char *nameptr)
    for (i = 0; i < 40; i++)
       fsave_info.form_name[i] = 0;      /* initialize string */
    strcpy(fsave_info.form_name, nameptr);
-   if (fractype == FORMULA || fractype == FFORMULA)
+   if (fractype == FFORMULA)
    {
       fsave_info.uses_p1 = (short) uses_p1;
       fsave_info.uses_p2 = (short) uses_p2;
@@ -662,10 +665,10 @@ static int _fastcall store_item_name(char *nameptr)
 static void _fastcall setup_save_info(struct fractal_info far * save_info)
 {
    int i;
-   if (fractype != FORMULA && fractype != FFORMULA)
+   if (fractype != FFORMULA)
       maxfn = 0;
    /* set save parameters in save structure */
-   far_strcpy(save_info->info_id, INFO_ID);
+   _fstrcpy(save_info->info_id, INFO_ID);
    save_info->version = VERSION;
 
    if (maxit <= SHRT_MAX)
@@ -965,7 +968,7 @@ static int compress(int rowlimit)
        hshift++;
    hshift = 8 - hshift;                /* set hash code range bound */
 
-   far_memset(htab,0xff,(unsigned)HSIZE*sizeof(long));
+   _fmemset(htab, 0xff, HSIZE*sizeof(long));
    hsize_reg = HSIZE;
 
    output((int)ClearCode);
@@ -1148,10 +1151,10 @@ static void _fastcall output(int code)
  */
 static void _fastcall cl_block(void)             /* table clear for block compress */
 {
-        far_memset(htab,0xff,(unsigned)HSIZE*sizeof(long));
-        free_ent = ClearCode + 2;
-        clear_flg = 1;
-        output((int)ClearCode);
+   _fmemset(htab, 0xff, HSIZE*sizeof(long));
+   free_ent = ClearCode + 2;
+   clear_flg = 1;
+   output((int)ClearCode);
 }
 
 /*

@@ -14,24 +14,15 @@ struct LHyperComplex {
 };
 
 struct DComplex {
-#ifndef XFRACT
   double x,y;
-#else
-  LDBL x,y;
-#endif
 };
 
 struct LDComplex {
-    LDBL x,y;
-};
-
-struct LComplex {
-    long x,y;
+    double x,y;
 };
 
 typedef struct  DComplex         _CMPLX;
 typedef struct  LDComplex        _LDCMPLX;
-typedef struct  LComplex         _LCMPLX;
 typedef struct  DHyperComplex    _HCMPLX;
 typedef struct  LHyperComplex    _LHCMPLX;
 #endif

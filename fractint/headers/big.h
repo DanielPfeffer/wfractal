@@ -108,8 +108,8 @@ typedef unsigned char BIGDIST * big_t;
 #if 0 /* remove for Fractint */
 struct Complex
 {
-   LDBL x;
-   LDBL y;
+   double x;
+   double y;
 };
 typedef struct Complex    _CMPLX;
 #else
@@ -196,11 +196,11 @@ extern bn_t div_a_bn_int(bn_t r, U16 u);
 /* used to be in bigflta.asm or bigfltc.c */
 extern bf_t clear_bf(bf_t r);
 extern bf_t copy_bf(bf_t r, bf_t n);
-extern bf_t floattobf(bf_t r, LDBL f);
-extern LDBL bftofloat(bf_t n);
-extern LDBL bntofloat(bn_t n);
-extern LDBL extract_256(LDBL f, int *exp_ptr);
-extern LDBL scale_256( LDBL f, int n );
+extern bf_t floattobf(bf_t r, double f);
+extern double bftofloat(bf_t n);
+extern double bntofloat(bn_t n);
+extern double extract_256(double f, int *exp_ptr);
+extern double scale_256( double f, int n );
 
 /* functions defined in bignum.c */
 #ifdef ACCESS_BY_BYTE
@@ -256,7 +256,7 @@ extern bn_t atan2_bn(bn_t r, bn_t ny, bn_t nx);
 
     /* misc */
 extern int is_bn_zero(bn_t n);
-extern bn_t floattobn(bn_t r, LDBL f);
+extern bn_t floattobn(bn_t r, double f);
 
 /************/
 /* bigflt.c */
@@ -307,10 +307,10 @@ extern bf_t atan2_bf(bf_t r, bf_t ny, bf_t nx);
 extern int is_bf_zero(bf_t n);
 extern int convert_bf(bf_t new, bf_t old, int newbflength, int oldbflength);
 
-extern LDBL extract_value(LDBL f, LDBL b, int *exp_ptr);
-extern LDBL scale_value( LDBL f, LDBL b , int n );
-extern LDBL extract_10(LDBL f, int *exp_ptr);
-extern LDBL scale_10( LDBL f, int n );
+extern double extract_value(double f, double b, int *exp_ptr);
+extern double scale_value( double f, double b , int n );
+extern double extract_10(double f, int *exp_ptr);
+extern double scale_10( double f, int n );
 
 extern bf10_t unsafe_bftobf10(bf10_t s, int dec, bf_t n);
 extern bf10_t mult_a_bf10_int(bf10_t s, int dec, U16 n);

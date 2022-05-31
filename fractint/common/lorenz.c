@@ -85,9 +85,7 @@ static char orbitsave_format[] = {"%g %g %g 15\n"};
 
 S32 maxct;
 static int t;
-static long l_dx,l_dy,l_dz,l_dt,l_a,l_b,l_c,l_d;
-static long l_adt,l_bdt,l_cdt,l_xdt,l_ydt;
-static long initorbitlong[3];
+static long l_d;
 
 static double dx,dy,dz,dt,a,b,c,d;
 static double adt,bdt,cdt,xdt,ydt,zdt;
@@ -101,28 +99,26 @@ static FCODE NoQueue[] =
   "Not enough memory: switching to random walk.\n";
 
 static int    mxhits;
-int    run_length;
+static int    run_length;
 /*
 enum   {breadth_first, depth_first, random_walk, random_run} major_method;
 enum   {left_first, right_first}                             minor_method;
 */
 enum   Major major_method;
 enum   Minor minor_method;
-struct affine cvt;
-struct l_affine lcvt;
+static struct affine cvt;
 
-double Cx, Cy;
-long   CxLong, CyLong;
+static double Cx, Cy;
 
 /*
  * end of Inverse Julia declarations;
  */
 
 /* these are potential user parameters */
-int connect = 1;    /* flag to connect points with a line */
-int euler = 0;      /* use implicit euler approximation for dynamic system */
-int waste = 100;    /* waste this many points before plotting */
-int projection = 2; /* projection plane - default is to plot x-y */
+static int connect = 1;    /* flag to connect points with a line */
+static int euler = 0;      /* use implicit euler approximation for dynamic system */
+static int waste = 100;    /* waste this many points before plotting */
+static int projection = 2; /* projection plane - default is to plot x-y */
 
 /******************************************************************/
 /*                 zoom box conversion functions                  */
@@ -251,135 +247,11 @@ static int l_setup_convert_to_screen(struct l_affine *l_cvt)
 /******************************************************************/
 
 static double orbit;
-static long   l_orbit;
-static long l_sinx,l_cosx;
-
-int orbit3dlongsetup()
-{
-   maxct = 0L;
-   connect = 1;
-   waste = 100;
-   projection = 2;
-   if (fractype==LHENON || fractype==KAM || fractype==KAM3D ||
-       fractype==INVERSEJULIA)
-      connect=0;
-   if(fractype==LROSSLER)
-      waste = 500;
-   if(fractype==LLORENZ)
-      projection = 1;
-
-   initorbitlong[0] = fudge;  /* initial conditions */
-   initorbitlong[1] = fudge;
-   initorbitlong[2] = fudge;
-
-   if(fractype==LHENON)
-   {
-      l_a =  (long)(param[0]*fudge);
-      l_b =  (long)(param[1]*fudge);
-      l_c =  (long)(param[2]*fudge);
-      l_d =  (long)(param[3]*fudge);
-   }
-   else if(fractype==KAM || fractype==KAM3D)
-   {
-      maxct = 1L;
-      a   = param[0];           /* angle */
-      if(param[1] <= 0.0)
-         param[1] = .01;
-      l_b =  (long)(param[1]*fudge);    /* stepsize */
-      l_c =  (long)(param[2]*fudge);    /* stop */
-      t = (int)(l_d =  (long)(param[3]));     /* points per orbit */
-
-      l_sinx = (long)(sin(a)*fudge);
-      l_cosx = (long)(cos(a)*fudge);
-      l_orbit = 0;
-      initorbitlong[0] = initorbitlong[1] = initorbitlong[2] = 0;
-   }
-   else if (fractype == INVERSEJULIA)
-   {
-      LCMPLX Sqrt;
-
-      CxLong = (long)(param[0] * fudge);
-      CyLong = (long)(param[1] * fudge);
-
-      mxhits    = (int) param[2];
-      run_length = (int) param[3];
-      if (mxhits <= 0)
-          mxhits = 1;
-      else if (mxhits >= colors)
-          mxhits = colors - 1;
-      param[2] = mxhits;
-
-      setup_convert_to_screen(&cvt);
-      /* Note: using bitshift of 21 for affine, 24 otherwise */
-
-      lcvt.a = (long)(cvt.a * (1L << 21));
-      lcvt.b = (long)(cvt.b * (1L << 21));
-      lcvt.c = (long)(cvt.c * (1L << 21));
-      lcvt.d = (long)(cvt.d * (1L << 21));
-      lcvt.e = (long)(cvt.e * (1L << 21));
-      lcvt.f = (long)(cvt.f * (1L << 21));
-
-      Sqrt = ComplexSqrtLong(fudge - 4 * CxLong, -4 * CyLong);
-
-      switch (major_method) {
-         case breadth_first:
-            if (Init_Queue((long)32*1024) == 0)
-            { /* can't get queue memory: fall back to random walk */
-               stopmsg(20, NoQueue);
-               major_method = random_walk;
-               goto lrwalk;
-            }
-            EnQueueLong((fudge + Sqrt.x) / 2,  Sqrt.y / 2);
-            EnQueueLong((fudge - Sqrt.x) / 2, -Sqrt.y / 2);
-            break;
-         case depth_first:
-            if (Init_Queue((long)32*1024) == 0)
-            { /* can't get queue memory: fall back to random walk */
-               stopmsg(20, NoQueue);
-               major_method = random_walk;
-               goto lrwalk;
-            }
-            switch (minor_method) {
-               case left_first:
-                  PushLong((fudge + Sqrt.x) / 2,  Sqrt.y / 2);
-                  PushLong((fudge - Sqrt.x) / 2, -Sqrt.y / 2);
-                  break;
-               case right_first:
-                  PushLong((fudge - Sqrt.x) / 2, -Sqrt.y / 2);
-                  PushLong((fudge + Sqrt.x) / 2,  Sqrt.y / 2);
-                  break;
-            }
-            break;
-         case random_walk:
-lrwalk:
-            lnew.x = initorbitlong[0] = fudge + Sqrt.x / 2;
-            lnew.y = initorbitlong[1] =         Sqrt.y / 2;
-            break;
-         case random_run:
-            lnew.x = initorbitlong[0] = fudge + Sqrt.x / 2;
-            lnew.y = initorbitlong[1] =         Sqrt.y / 2;
-            break;
-      }
-   }
-   else
-   {
-      l_dt = (long)(param[0]*fudge);
-      l_a =  (long)(param[1]*fudge);
-      l_b =  (long)(param[2]*fudge);
-      l_c =  (long)(param[3]*fudge);
-   }
-
-   /* precalculations for speed */
-   l_adt = multiply(l_a,l_dt,bitshift);
-   l_bdt = multiply(l_b,l_dt,bitshift);
-   l_cdt = multiply(l_c,l_dt,bitshift);
-   return(1);
-}
 
 #define COSB   dx
 #define SINABC dy
 
-int orbit3dfloatsetup()
+int orbit3dfloatsetup(void)
 {
    maxct = 0L;
    connect = 1;
@@ -720,152 +592,6 @@ Minverse_julia_orbit()
 
 }
 
-int
-Linverse_julia_orbit()
-{
-   static int   random_dir = 0, random_len = 0;
-   int    newrow, newcol;
-   int    color;
-
-   /*
-    * First, compute new point
-    */
-   switch (major_method) {
-      case breadth_first:
-         if (QueueEmpty())
-            return -1;
-         lnew = DeQueueLong();
-         break;
-      case depth_first:
-         if (QueueEmpty())
-            return -1;
-         lnew = PopLong();
-         break;
-      case random_walk:
-         lnew = ComplexSqrtLong(lnew.x - CxLong, lnew.y - CyLong);
-         if (RANDOM(2))
-         {
-            lnew.x = -lnew.x;
-            lnew.y = -lnew.y;
-         }
-         break;
-      case random_run:
-         lnew = ComplexSqrtLong(lnew.x - CxLong, lnew.y - CyLong);
-         if (random_len == 0)
-         {
-            random_len = RANDOM(run_length);
-            random_dir = RANDOM(3);
-         }
-         switch (random_dir) {
-            case 0:     /* left */
-               break;
-            case 1:     /* right */
-               lnew.x = -lnew.x;
-               lnew.y = -lnew.y;
-               break;
-            case 2:     /* random direction */
-               if (RANDOM(2))
-               {
-                  lnew.x = -lnew.x;
-                  lnew.y = -lnew.y;
-               }
-               break;
-         }
-   }
-
-   /*
-    * Next, find its pixel position
-    *
-    * Note: had to use a bitshift of 21 for this operation because
-    * otherwise the values of lcvt were truncated.  Used bitshift
-    * of 24 otherwise, for increased precision.
-    */
-   newcol = (int)((multiply(lcvt.a, lnew.x >> (bitshift - 21), 21) +
-             multiply(lcvt.b, lnew.y >> (bitshift - 21), 21) + lcvt.e) >> 21);
-   newrow = (int)((multiply(lcvt.c, lnew.x >> (bitshift - 21), 21) +
-             multiply(lcvt.d, lnew.y >> (bitshift - 21), 21) + lcvt.f) >> 21);
-
-   if (newcol < 1 || newcol >= xdots || newrow < 1 || newrow >= ydots)
-   {
-      /*
-       * MIIM must skip points that are off the screen boundary,
-       * since it cannot read their color.
-       */
-      if (RANDOM(2))
-         color =  1;
-      else
-         color = -1;
-      switch (major_method) {
-         case breadth_first:
-            lnew = ComplexSqrtLong(lnew.x - CxLong, lnew.y - CyLong);
-            EnQueueLong(color * lnew.x, color * lnew.y);
-            break;
-         case depth_first:
-            lnew = ComplexSqrtLong(lnew.x - CxLong, lnew.y - CyLong);
-            PushLong(color * lnew.x, color * lnew.y);
-            break;
-         case random_run:
-            random_len--;
-         case random_walk:
-            break;
-      }
-      return 1;
-   }
-
-   /*
-    * Read the pixel's color:
-    * For MIIM, if color >= mxhits, discard the point
-    *           else put the point's children onto the queue
-    */
-   color  = getcolor(newcol, newrow);
-   switch (major_method) {
-      case breadth_first:
-         if (color < mxhits)
-         {
-            putcolor(newcol, newrow, color+1);
-            lnew = ComplexSqrtLong(lnew.x - CxLong, lnew.y - CyLong);
-            EnQueueLong( lnew.x,  lnew.y);
-            EnQueueLong(-lnew.x, -lnew.y);
-         }
-         break;
-      case depth_first:
-         if (color < mxhits)
-         {
-            putcolor(newcol, newrow, color+1);
-            lnew = ComplexSqrtLong(lnew.x - CxLong, lnew.y - CyLong);
-            if (minor_method == left_first)
-            {
-               if (QueueFullAlmost())
-                  PushLong(-lnew.x, -lnew.y);
-               else
-               {
-                  PushLong( lnew.x,  lnew.y);
-                  PushLong(-lnew.x, -lnew.y);
-               }
-            }
-            else
-            {
-               if (QueueFullAlmost())
-                  PushLong( lnew.x,  lnew.y);
-               else
-               {
-                  PushLong(-lnew.x, -lnew.y);
-                  PushLong( lnew.x,  lnew.y);
-               }
-            }
-         }
-         break;
-      case random_run:
-         random_len--;
-         /* fall through */
-      case random_walk:
-         if (color < colors-1)
-            putcolor(newcol, newrow, color+1);
-         break;
-   }
-   return 1;
-}
-
 #if 0
 int inverse_julia_orbit(double *x, double *y, double *z)
 {
@@ -896,20 +622,6 @@ int inverse_julia_orbit(double *x, double *y, double *z)
    return(0);
 }
 #endif
-
-int lorenz3dlongorbit(long *l_x, long *l_y, long *l_z)
-{
-      l_xdt = multiply(*l_x,l_dt,bitshift);
-      l_ydt = multiply(*l_y,l_dt,bitshift);
-      l_dx  = -multiply(l_adt,*l_x,bitshift) + multiply(l_adt,*l_y,bitshift);
-      l_dy  =  multiply(l_bdt,*l_x,bitshift) -l_ydt -multiply(*l_z,l_xdt,bitshift);
-      l_dz  = -multiply(l_cdt,*l_z,bitshift) + multiply(*l_x,l_ydt,bitshift);
-
-      *l_x += l_dx;
-      *l_y += l_dy;
-      *l_z += l_dz;
-      return(0);
-}
 
 int lorenz3d1floatorbit(double *x, double *y, double *z)
 {
@@ -1005,19 +717,6 @@ int henonfloatorbit(double *x, double *y, double *z)
       return(0);
 }
 
-int henonlongorbit(long *l_x, long *l_y, long *l_z)
-{
-      long newx,newy;
-      *l_z = *l_x; /* for warning only */
-      newx = multiply(*l_x,*l_x,bitshift);
-      newx = multiply(newx,l_a,bitshift);
-      newx  = fudge + *l_y - newx;
-      newy  = multiply(l_b,*l_x,bitshift);
-      *l_x = newx;
-      *l_y = newy;
-      return(0);
-}
-
 int rosslerfloatorbit(double *x, double *y, double *z)
 {
       xdt = (*x)*dt;
@@ -1055,23 +754,6 @@ int gingerbreadfloatorbit(double *x, double *y, double *z)
       return(0);
 }
 
-int rosslerlongorbit(long *l_x, long *l_y, long *l_z)
-{
-      l_xdt = multiply(*l_x,l_dt,bitshift);
-      l_ydt = multiply(*l_y,l_dt,bitshift);
-
-      l_dx  = -l_ydt - multiply(*l_z,l_dt,bitshift);
-      l_dy  =  l_xdt + multiply(*l_y,l_adt,bitshift);
-      l_dz  =  l_bdt + multiply(*l_z,l_xdt,bitshift)
-                     - multiply(*l_z,l_cdt,bitshift);
-
-      *l_x += l_dx;
-      *l_y += l_dy;
-      *l_z += l_dz;
-
-      return(0);
-}
-
 /* OSTEP  = Orbit Step (and inner orbit value) */
 /* NTURNS = Outside Orbit */
 /* TURN2  = Points per orbit */
@@ -1093,24 +775,6 @@ int kamtorusfloatorbit(double *r, double *s, double *z)
    srr = (*s)-(*r)*(*r);
    (*s)=(*r)*sinx+srr*cosx;
    (*r)=(*r)*cosx-srr*sinx;
-   return(0);
-}
-
-int kamtoruslongorbit(long *r, long *s, long *z)
-{
-   long srr;
-   if(t++ >= l_d)
-   {
-      l_orbit += l_b;
-      (*r) = (*s) = l_orbit/3;
-      t = 0;
-      *z = l_orbit;
-      if(l_orbit > l_c)
-         return(1);
-   }
-   srr = (*s)-multiply((*r),(*r),bitshift);
-   (*s)=multiply((*r),l_sinx,bitshift)+multiply(srr,l_cosx,bitshift);
-   (*r)=multiply((*r),l_cosx,bitshift)-multiply(srr,l_sinx,bitshift);
    return(0);
 }
 
@@ -1451,237 +1115,6 @@ int orbit2dfloat()
    return(ret);
 }
 
-int orbit2dlong()
-{
-   FILE *fp;
-   long *soundvar;
-   long x,y,z;
-   int color,col,row;
-   int count;
-   int oldrow, oldcol;
-   long *p0,*p1,*p2;
-   struct l_affine cvt;
-   int ret,start;
-   start = 1;
-   soundvar = p0 = p1 = p2 = NULL;
-   fp = open_orbitsave();
-
-   /* setup affine screen coord conversion */
-   l_setup_convert_to_screen(&cvt);
-
-   /* set up projection scheme */
-   if(projection==0)
-   {
-      p0 = &z;
-      p1 = &x;
-      p2 = &y;
-   }
-   else if(projection==1)
-   {
-      p0 = &x;
-      p1 = &z;
-      p2 = &y;
-   }
-   else if(projection==2)
-   {
-      p0 = &x;
-      p1 = &y;
-      p2 = &z;
-   }
-   if((soundflag&7)==2)
-      soundvar = &x;
-   else if((soundflag&7)==3)
-      soundvar = &y;
-   else if((soundflag&7)==4)
-      soundvar = &z;
-   if(inside > 0)
-      color = inside;
-   else
-      color = 2;
-   if(color >= colors)
-      color = 1;
-   oldcol = oldrow = -1;
-   x = initorbitlong[0];
-   y = initorbitlong[1];
-   z = initorbitlong[2];
-   count = ret = 0;
-   if(maxit > 0x1fffffL || maxct)
-      maxct = 0x7fffffffL;
-   else
-      maxct = maxit*1024L;
-   coloriter = 0L;
-
-   if (resuming)
-   {
-      start_resume();
-      get_resume(sizeof(count),&count,sizeof(color),&color,
-          sizeof(oldrow),&oldrow,sizeof(oldcol),&oldcol,
-          sizeof(x),&x,sizeof(y),&y,sizeof(z),&z,sizeof(t),&t,
-          sizeof(l_orbit),&l_orbit,sizeof(coloriter),&coloriter,
-          0);
-      end_resume();
-   }
-
-   while(coloriter++ <= maxct) /* loop until keypress or maxit */
-   {
-      if(keypressed())
-      {
-         mute();
-         alloc_resume(100,1);
-         put_resume(sizeof(count),&count,sizeof(color),&color,
-             sizeof(oldrow),&oldrow,sizeof(oldcol),&oldcol,
-             sizeof(x),&x,sizeof(y),&y,sizeof(z),&z,sizeof(t),&t,
-             sizeof(l_orbit),&l_orbit,sizeof(coloriter),&coloriter,
-             0);
-         ret = -1;
-         break;
-      }
-      if (++count > 1000)
-      {        /* time to switch colors? */
-         count = 0;
-         if (++color >= colors)   /* another color to switch to? */
-            color = 1;  /* (don't use the background color) */
-      }
-
-      col = (int)((multiply(cvt.a,x,bitshift) + multiply(cvt.b,y,bitshift) + cvt.e) >> bitshift);
-      row = (int)((multiply(cvt.c,x,bitshift) + multiply(cvt.d,y,bitshift) + cvt.f) >> bitshift);
-      if(overflow)
-      {
-         overflow = 0;
-         return(ret);
-      }
-      if ( col >= 0 && col < xdots && row >= 0 && row < ydots )
-      {
-         if ((soundflag&7) > 1)
-         {
-            double yy;
-            yy = *soundvar;
-            yy = yy/fudge;
-            w_snd((int)(yy*100+basehertz));
-         }
-         if(oldcol != -1 && connect)
-            draw_line(col,row,oldcol,oldrow,color%colors);
-         else if(!start)
-            (*plot)(col,row,color%colors);
-         oldcol = col;
-         oldrow = row;
-         start = 0;
-      }
-      else if((long)abs(row) + (long)abs(col) > BAD_PIXEL) /* sanity check */
-         return(ret);
-      else
-         oldrow = oldcol = -1;
-
-      /* Calculate the next point */
-      if(LORBIT(p0, p1, p2))
-         break;
-      if(fp)
-         fprintf(fp,orbitsave_format,(double)*p0/fudge,(double)*p1/fudge,0.0);
-   }
-   if(fp)
-      fclose(fp);
-   return(ret);
-}
-
-static int orbit3dlongcalc(void)
-{
-   FILE *fp;
-   unsigned long count;
-   int oldcol,oldrow;
-   int oldcol1,oldrow1;
-   struct long3dvtinf inf;
-   int color;
-   int ret;
-
-   /* setup affine screen coord conversion */
-   l_setup_convert_to_screen(&inf.cvt);
-
-   oldcol1 = oldrow1 = oldcol = oldrow = -1;
-   color = 2;
-   if(color >= colors)
-      color = 1;
-
-   inf.orbit[0] = initorbitlong[0];
-   inf.orbit[1] = initorbitlong[1];
-   inf.orbit[2] = initorbitlong[2];
-
-   if(diskvideo)                /* this would KILL a disk drive! */
-      notdiskmsg();
-
-   fp = open_orbitsave();
-
-   count = ret = 0;
-   if(maxit > 0x1fffffL || maxct)
-      maxct = 0x7fffffffL;
-   else
-      maxct = maxit*1024L;
-   coloriter = 0L;
-   while(coloriter++ <= maxct) /* loop until keypress or maxit */
-   {
-      /* calc goes here */
-      if (++count > 1000)
-      {        /* time to switch colors? */
-         count = 0;
-         if (++color >= colors)   /* another color to switch to? */
-            color = 1;        /* (don't use the background color) */
-      }
-      if(keypressed())
-      {
-         mute();
-         ret = -1;
-         break;
-      }
-
-      LORBIT(&inf.orbit[0],&inf.orbit[1],&inf.orbit[2]);
-      if(fp)
-         fprintf(fp,orbitsave_format,(double)inf.orbit[0]/fudge,(double)inf.orbit[1]/fudge,(double)inf.orbit[2]/fudge);
-      if (long3dviewtransf(&inf))
-      {
-         /* plot if inside window */
-         if (inf.col >= 0)
-         {
-            if(realtime)
-               whichimage=1;
-            if ((soundflag&7) > 1)
-            {
-               double yy;
-               yy = inf.viewvect[((soundflag&7) - 2)];
-               yy = yy/fudge;
-               w_snd((int)(yy*100+basehertz));
-            }
-            if(oldcol != -1 && connect)
-               draw_line(inf.col,inf.row,oldcol,oldrow,color%colors);
-            else
-               (*plot)(inf.col,inf.row,color%colors);
-         }
-         else if (inf.col == -2)
-            return(ret);
-         oldcol = inf.col;
-         oldrow = inf.row;
-         if(realtime)
-         {
-            whichimage=2;
-            /* plot if inside window */
-            if (inf.col1 >= 0)
-            {
-               if(oldcol1 != -1 && connect)
-                  draw_line(inf.col1,inf.row1,oldcol1,oldrow1,color%colors);
-               else
-                  (*plot)(inf.col1,inf.row1,color%colors);
-            }
-            else if (inf.col1 == -2)
-               return(ret);
-            oldcol1 = inf.col1;
-            oldrow1 = inf.row1;
-         }
-      }
-   }
-   if(fp)
-      fclose(fp);
-   return(ret);
-}
-
-
 static int orbit3dfloatcalc(void)
 {
    FILE *fp;
@@ -1941,10 +1374,10 @@ int keep_scrn_coords = 0;
 int set_orbit_corners = 0;
 long orbit_interval;
 double oxmin, oymin, oxmax, oymax, ox3rd, oy3rd;
-struct affine o_cvt;
+static struct affine o_cvt;
 static int o_color;
 
-int setup_orbits_to_screen(struct affine *scrn_cnvt)
+static int setup_orbits_to_screen(struct affine *scrn_cnvt)
 {
    double det, xd, yd;
 
@@ -1968,13 +1401,9 @@ int plotorbits2dsetup(void)
 {
 
 #ifndef XFRACT
-   if (curfractalspecific->isinteger != 0) {
-      int tofloat;
-      if ((tofloat = curfractalspecific->tofloat) == NOFRACTAL)
-         return(-1);
-      floatflag = usr_floatflag = 1; /* force floating point */
-      curfractalspecific = &fractalspecific[tofloat];
-      fractype = tofloat;
+   if (curfractalspecific->isinteger != 0)
+   {
+      return(-1);
    }
 #endif
 
@@ -2495,7 +1924,7 @@ static void setupmatrix(MATRIX doublemat)
 
 }
 
-int orbit3dfloat()
+int orbit3dfloat(void)
 {
    display3d = -1;
    if(0 < glassestype && glassestype < 3)
@@ -2503,16 +1932,6 @@ int orbit3dfloat()
    else
       realtime = 0;
    return(funny_glasses_call(orbit3dfloatcalc));
-}
-
-int orbit3dlong()
-{
-   display3d = -1;
-   if(0 < glassestype && glassestype < 3)
-      realtime = 1;
-   else
-      realtime = 0;
-   return(funny_glasses_call(orbit3dlongcalc));
 }
 
 static int ifs3d(void)

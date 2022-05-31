@@ -115,6 +115,8 @@
 
 #include <string.h>
 
+#include <mem.h>
+
 #ifndef USE_VARARGS
 #include <stdarg.h>
 #else
@@ -2340,7 +2342,7 @@ static void PalTable__SaveRect(PalTable *this)
          {
          getrow(this->x, this->y+yoff, width, buff);
          hline (this->x, this->y+yoff, width, bg_color);
-         far_memcpy(ptr,bufptr, width);
+         _fmemcpy(ptr, bufptr, width);
          ptr = (char far *)normalize(ptr+width);
          }
       Cursor_Show();
@@ -2414,7 +2416,7 @@ static void PalTable__RestoreRect(PalTable *this)
          Cursor_Hide();
          for (yoff=0; yoff<depth; yoff++)
             {
-            far_memcpy(bufptr, ptr, width);
+            _fmemcpy(bufptr, ptr, width);
             putrow(this->x, this->y+yoff, width, buff);
             ptr = (char far *)normalize(ptr+width);
             }
@@ -2903,7 +2905,7 @@ static void PalTable__other_key(int key, RGBEditor *rgb, VOIDPTR info)
               char msg[sizeof(o_msg)];
               int i;
               char buf[20];
-              far_strcpy(msg,o_msg);
+              _fstrcpy(msg, o_msg);
               sprintf(buf,"%.3f",1./gamma_val);
               stackscreen();
               i = field_prompt(0,msg,NULL,buf,20,NULL);
@@ -3058,7 +3060,7 @@ static void PalTable__other_key(int key, RGBEditor *rgb, VOIDPTR info)
             Cursor_Hide();
 
             PalTable__SaveUndoData(this, 0, 255);
-            far_memcpy(this->pal,this->save_pal[which],256*3);
+            _fmemcpy(this->pal, this->save_pal[which], 256*3);
             PalTable__UpdateDAC(this);
 
             PalTable__SetCurr(this, -1, 0);
@@ -3084,7 +3086,7 @@ static void PalTable__other_key(int key, RGBEditor *rgb, VOIDPTR info)
 
          if ( this->save_pal[which] != NULL )
             {
-            far_memcpy(this->save_pal[which],this->pal,256*3);
+            _fmemcpy(this->save_pal[which], this->pal, 256*3);
             }
          else
             buzzer(3); /* oops! short on memory! */
@@ -3280,7 +3282,7 @@ static void PalTable__MkDefaultPalettes(PalTable *this)  /* creates default Fkey
    {
       if (this->save_pal[i] != NULL)
       {
-         far_memcpy(this->save_pal[i], this->pal, 256*3);
+         _fmemcpy(this->save_pal[i], this->pal, 256*3);
       }
    }
 }

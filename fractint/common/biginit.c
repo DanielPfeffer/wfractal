@@ -6,12 +6,11 @@ but is a customized version specific to Fractint.  The biggest difference
 is in the allocations of memory for the big numbers.
 */
 
+#include <stdlib.h>
 #include <string.h>
-#ifdef __APPLE__
-#include <malloc/malloc.h>
-#else
-#include <malloc.h>
-#endif
+
+#include <mem.h>
+
   /* see Fractint.c for a description of the "include"  hierarchy */
 #include "port.h"
 #include "prototyp.h"
@@ -232,7 +231,7 @@ static void init_bf_2(void)
        char msg[80];
        char nmsg[80];
        static FCODE fmsg[] = {"Requested precision of %d too high, aborting"};
-       far_strcpy(nmsg,fmsg);
+       _fstrcpy(nmsg, fmsg);
        sprintf(msg,nmsg,decimals);
        stopmsg(0,msg);
        goodbye();
@@ -262,13 +261,13 @@ static void init_bf_2(void)
 
     /* good citizens initialize variables */
     if(bf_save_len)  /* leave save area */
-       far_memset(bnroot+(bf_save_len+2)*22,0,(unsigned)(startstack-(bf_save_len+2)*22));
+       _fmemset(bnroot+(bf_save_len+2)*22, 0, startstack-(bf_save_len+2)*22);
     else /* first time through - nothing saved */
        {
        /* high variables */
-       far_memset(bnroot+maxstack,0,(bflength+2)*22);
+       _fmemset(bnroot+maxstack, 0, (bflength+2)*22);
        /* low variables */
-       far_memset(bnroot,0,(unsigned)startstack);
+       _fmemset(bnroot, 0, startstack);
        }
 
     restore_bf_vars();
@@ -292,9 +291,9 @@ static int save_bf_vars(void)
       {
       mem = (bflength+2)*22;  /* 6 corners + 6 save corners + 10 params */
       bf_save_len = bflength;
-      far_memcpy(bnroot,bfxmin,mem);
+      _fmemcpy(bnroot, bfxmin, mem);
       /* scrub old high area */
-      far_memset(bfxmin,0,mem);
+      _fmemset(bfxmin, 0, mem);
       ret = 0;
       }
    else
@@ -333,7 +332,7 @@ static int restore_bf_vars(void)
    convert_bf(bfsy3rd,ptr,bflength,bf_save_len); ptr += bf_save_len+2;
 
    /* scrub save area */
-   far_memset(bnroot,0,(bf_save_len+2)*22);
+   _fmemset(bnroot, 0, (bf_save_len+2)*22);
    return(0);
    }
 

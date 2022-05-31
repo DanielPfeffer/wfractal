@@ -2,14 +2,9 @@
         Resident odds and ends that don't fit anywhere else.
 */
 
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 #include <time.h>
-#ifdef __APPLE__
-#include <malloc/malloc.h>
-#else
-#include <malloc.h>
-#endif
 
 #ifndef XFRACT
 #include <io.h>
@@ -58,7 +53,7 @@ void findpath(char far *filename, char *fullpathname) /* return full pathnames *
       return;
    }
 
-   far_strcpy(temp_path,filename);   /* avoid side effect changes to filename */
+   _fstrcpy(temp_path, filename);   /* avoid side effect changes to filename */
 
    if (temp_path[0] == SLASHC || (temp_path[0] && temp_path[1] == ':')) {
       if(access(temp_path,0)==0) {   /* file exists */
@@ -105,7 +100,7 @@ int putstringwrap(int *row,int col1,int col2,int color,char far *str,int maxrow)
     int length, decpt, padding, startrow, done;
     done = 0;
     startrow = *row;
-    length = far_strlen(str);
+    length = _fstrlen(str);
     padding = 3; /* space between col1 and decimal. */
     /* find decimal point */
     for(decpt=0;decpt < length; decpt++)
@@ -161,7 +156,7 @@ zoom box.  Same goes for the Skew angles
 #pragma optimize( "", off )
 #endif
 
-void cvtcentermag(double *Xctr, double *Yctr, LDBL *Magnification, double *Xmagfactor, double *Rotation, double *Skew)
+void cvtcentermag(double *Xctr, double *Yctr, double *Magnification, double *Xmagfactor, double *Rotation, double *Skew)
 {
    double Width, Height;
    double a, b; /* bottom, left, diagonal */
@@ -257,7 +252,7 @@ void cvtcentermag(double *Xctr, double *Yctr, LDBL *Magnification, double *Xmagf
 
 
 /* convert center/mag to corners */
-void cvtcorners(double Xctr, double Yctr, LDBL Magnification, double Xmagfactor, double Rotation, double Skew)
+void cvtcorners(double Xctr, double Yctr, double Magnification, double Xmagfactor, double Rotation, double Skew)
 {
    double x, y;
    double h, w; /* half height, width */
@@ -313,13 +308,13 @@ void cvtcorners(double Xctr, double Yctr, LDBL Magnification, double Xmagfactor,
 }
 
 /* convert corners to center/mag using bf */
-void cvtcentermagbf(bf_t Xctr, bf_t Yctr, LDBL *Magnification, double *Xmagfactor, double *Rotation, double *Skew)
+void cvtcentermagbf(bf_t Xctr, bf_t Yctr, double *Magnification, double *Xmagfactor, double *Rotation, double *Skew)
 {
-   /* needs to be LDBL or won't work past 307 (-DBL_MIN_10_EXP) or so digits */
-   LDBL Width, Height;
-   LDBL a, b; /* bottom, left, diagonal */
-   LDBL a2, b2, c2; /* squares of above */
-   LDBL tmpx1, tmpx2, tmpy=0.0, tmpy1, tmpy2 ;
+   /* needs to be double or won't work past 307 (-DBL_MIN_10_EXP) or so digits */
+   double Width, Height;
+   double a, b; /* bottom, left, diagonal */
+   double a2, b2, c2; /* squares of above */
+   double tmpx1, tmpx2, tmpy=0.0, tmpy1, tmpy2 ;
    double tmpa; /* temporary x, y, angle */
    bf_t bfWidth, bfHeight;
    bf_t bftmpx, bftmpy;
@@ -376,7 +371,7 @@ void cvtcentermagbf(bf_t Xctr, bf_t Yctr, LDBL *Magnification, double *Xmagfacto
       sub_bf(bftmpy, bfymin, bfy3rd);
       tmpy1 = bftofloat(bftmpy);
       a2 = tmpx1*tmpx1 + tmpy1*tmpy1;
-      a = sqrtl(a2);
+      a = sqrt(a2);
 
       /* divide tmpx and tmpy by |tmpx| so that double version of atan2() can be used */
       /* atan2() only depends on the ratio, this puts it in double's range */
@@ -393,7 +388,7 @@ void cvtcentermagbf(bf_t Xctr, bf_t Yctr, LDBL *Magnification, double *Xmagfacto
       sub_bf(bftmpy, bfymax, bfy3rd);
       tmpy2 = bftofloat(bftmpy);
       b2 = tmpx2*tmpx2 + tmpy2*tmpy2;
-      b = sqrtl(b2);
+      b = sqrt(b2);
 
       tmpa = acos((double)((a2+b2-c2)/(2*a*b))); /* save tmpa for later use */
       *Skew = 90 - rad_to_deg(tmpa);
@@ -430,11 +425,11 @@ void cvtcentermagbf(bf_t Xctr, bf_t Yctr, LDBL *Magnification, double *Xmagfacto
 
 
 /* convert center/mag to corners using bf */
-void cvtcornersbf(bf_t Xctr, bf_t Yctr, LDBL Magnification, double Xmagfactor, double Rotation, double Skew)
+void cvtcornersbf(bf_t Xctr, bf_t Yctr, double Magnification, double Xmagfactor, double Rotation, double Skew)
 {
-   LDBL x, y;
-   LDBL h, w; /* half height, width */
-   LDBL xmin, ymin, xmax, ymax, x3rd, y3rd;
+   double x, y;
+   double h, w; /* half height, width */
+   double xmin, ymin, xmax, ymax, x3rd, y3rd;
    double tanskew, sinrot, cosrot;
    bf_t bfh, bfw;
    bf_t bftmp;
@@ -591,16 +586,6 @@ nextname:
 /* ('timer()'     was moved to FRACTINT.C for MSC7-overlay speed purposes) */
 
 BYTE trigndx[] = {SIN,SQR,SINH,COSH};
-#ifndef XFRACT
-void (*ltrig0)(void) = lStkSin;
-void (*ltrig1)(void) = lStkSqr;
-void (*ltrig2)(void) = lStkSinh;
-void (*ltrig3)(void) = lStkCosh;
-void (*mtrig0)(void) = mStkSin;
-void (*mtrig1)(void) = mStkSqr;
-void (*mtrig2)(void) = mStkSinh;
-void (*mtrig3)(void) = mStkCosh;
-#endif
 void (*dtrig0)(void) = dStkSin;
 void (*dtrig1)(void) = dStkSqr;
 void (*dtrig2)(void) = dStkSinh;
@@ -621,12 +606,11 @@ static void trigdetails(char *buf)
 {
    int i, numfn;
    char tmpbuf[20];
-   if(fractype==JULIBROT || fractype==JULIBROTFP)
+   if(fractype==JULIBROTFP)
       numfn = (fractalspecific[neworbittype].flags >> 6) & 7;
    else
       numfn = (curfractalspecific->flags >> 6) & 7;
-   if(curfractalspecific == &fractalspecific[FORMULA] ||
-      curfractalspecific == &fractalspecific[FFORMULA]  )
+   if(curfractalspecific == &fractalspecific[FFORMULA]  )
       numfn = maxfn;
    *buf = 0; /* null string if none */
    if (numfn>0) {
@@ -671,31 +655,15 @@ void set_trig_pointers(int which)
    switch(which)
    {
    case 0:
-#ifndef XFRACT
-      ltrig0 = trigfn[trigndx[0]].lfunct;
-      mtrig0 = trigfn[trigndx[0]].mfunct;
-#endif
       dtrig0 = trigfn[trigndx[0]].dfunct;
       break;
    case 1:
-#ifndef XFRACT
-      ltrig1 = trigfn[trigndx[1]].lfunct;
-      mtrig1 = trigfn[trigndx[1]].mfunct;
-#endif
       dtrig1 = trigfn[trigndx[1]].dfunct;
       break;
    case 2:
-#ifndef XFRACT
-      ltrig2 = trigfn[trigndx[2]].lfunct;
-      mtrig2 = trigfn[trigndx[2]].mfunct;
-#endif
       dtrig2 = trigfn[trigndx[2]].dfunct;
       break;
    case 3:
-#ifndef XFRACT
-      ltrig3 = trigfn[trigndx[3]].lfunct;
-      mtrig3 = trigfn[trigndx[3]].mfunct;
-#endif
       dtrig3 = trigfn[trigndx[3]].dfunct;
       break;
    default: /* do 'em all */
@@ -764,7 +732,7 @@ void get_calculation_time(char *msg, long ctime)
 	     (ctime%360000L)/6000, (ctime%6000)/100, ctime%100);
    }
    else
-      far_strcpy(msg,sreallylongtime);
+      _fstrcpy(msg, sreallylongtime);
 }
 
 static void show_str_var(char *name, char *var, int *row, char *msg)
@@ -820,7 +788,7 @@ int tab_display_2(char *msg)
    putstring(s_row++,2,C_GENERAL_HI,msg);
    sprintf(msg,"calc_status %d pixel [%d,%d]",calc_status,col,row);
    putstring(s_row++,2,C_GENERAL_HI,msg);
-   if(fractype==FORMULA || fractype==FFORMULA)
+   if(fractype==FFORMULA)
    {
    sprintf(msg,"total_formula_mem %ld Max_Ops (posp) %u Max_Args (vsp) %u Used_extra %u",
       total_formula_mem,posp,vsp,used_extra);
@@ -852,9 +820,6 @@ int tab_display_2(char *msg)
 */
    sprintf(msg,"xxstart %d xxstop %d yystart %d yystop %d %s uses_ismand %d",
       xxstart,xxstop,yystart,yystop,
-#ifndef XFRACT
-      curfractalspecific->orbitcalc == fFormula?"fast parser":
-#endif
       curfractalspecific->orbitcalc ==  Formula?"slow parser":
       curfractalspecific->orbitcalc ==  BadFormula?"bad formula":
       "",uses_ismand);
@@ -864,8 +829,8 @@ int tab_display_2(char *msg)
       ixstart,ixstop,iystart,iystop,bitshift);
 */
    {
-      sprintf(msg,"minstackavail %d llimit2 %ld use_grid %d",
-         minstackavail,llimit2,use_grid);
+      sprintf(msg,"minstackavail %d use_grid %d",
+         minstackavail, use_grid);
    }
    putstring(s_row++,2,C_GENERAL_HI,msg);
    putstringcenter(24,0,80,C_GENERAL_LO,spressanykey1);
@@ -887,7 +852,7 @@ int tab_display()       /* display the status of the current image */
 {
    int s_row, i, j, addrow=0;
    double Xctr, Yctr;
-   LDBL Magnification;
+   double Magnification;
    double Xmagfactor, Rotation, Skew;
    bf_t bfXctr=NULL, bfYctr=NULL;
    char msg[350];
@@ -918,7 +883,7 @@ int tab_display()       /* display the status of the current image */
       bfXctr = alloc_stack(bflength+2);
       bfYctr = alloc_stack(bflength+2);
    }
-   if (fractype == FORMULA || fractype == FFORMULA)
+   if (fractype == FFORMULA)
       for (i = 0; i < MAXPARAMS; i += 2)
           if (!paramnotused(i))
              hasformparam++;
@@ -937,7 +902,7 @@ top:
              &curfractalspecific->name[1] :
              curfractalspecific->name);
       i = 0;
-      if (fractype == FORMULA || fractype == FFORMULA)
+      if (fractype == FFORMULA)
       {
          putstring(s_row+1,3,C_GENERAL_MED,sitem_name);
          putstring(s_row+1,16,C_GENERAL_HI,FormName);
@@ -1336,9 +1301,8 @@ static void area(void)
 
 int endswithslash(char far *fl)
 {
-   int len;
-   len = far_strlen(fl);
-   if(len)
+   size_t len = _fstrlen(fl);
+   if (len)
       if(fl[--len] == SLASHC)
          return(1);
    return(0);

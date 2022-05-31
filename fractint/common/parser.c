@@ -23,8 +23,8 @@
 /* */
 /*   Modified 12 July 1993 by CAE to fix crash when formula not found.  */
 
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 #include <time.h>
 
   /* see Fractint.c for a description of the "include"  hierarchy */
@@ -32,12 +32,7 @@
 #include "prototyp.h"
 
 
-#ifdef WATCH_MP
-double x1, y1, x2, y2;
-#endif
-
 enum MATH_TYPE MathType = D_MATH;
-/* moved _LCMPLX and union ARg to mpmath.h -6-20-90 TIW */
 
 #define MAX_OPS 250
 #define MAX_ARGS 100
@@ -52,16 +47,6 @@ struct PEND_OP {
    void (far *f)(void);
    int p;
 };
-
-#ifndef XFRACT
-#define atanl           atan
-#define ceill           ceil
-#define expl            exp
-#define fabsl           fabs
-#define floorl          floor
-#define sqrtl           sqrt
-#define LDBL            double
-#endif
 
 #ifndef XFRACT
 /* reuse an array in the decoder */
@@ -225,16 +210,6 @@ short uses_p1, uses_p2, uses_p3, uses_p4, uses_p5, uses_jump;
 short uses_ismand;
 unsigned int chars_in_formula;
 
-#ifndef XFRACT
-#define ChkLongDenom(denom)\
-    if ((denom == 0 || overflow) && save_release > 1920) {\
-        overflow = 1;\
-        return;\
-    }\
-    else if (denom == 0)\
-        return
-#endif
-
 #define ChkFloatDenom(denom)\
     if (fabs(denom) <= DBL_MIN) {\
         if (save_release > 1920) overflow = 1;\
@@ -290,127 +265,90 @@ unsigned int chars_in_formula;
 #define PE_SECOND_COLON                              34
 #define PE_INVALID_CALL_TO_PARSEERRS                 35
 
-static char far *ParseErrs(int which)
+static char const __far* ParseErrs(int which)
 {
-   int lasterr;
-   static FCODE e0[] = {"Should be an Argument"};
-   static FCODE e1[] = {"Should be an Operator"};
-   static FCODE e2[] = {"')' needs a matching '('"};
-   static FCODE e3[] = {"Need more ')'"};
-   static FCODE e4[] = {"Undefined Operator"};
-   static FCODE e5[] = {"Undefined Function"};
-   static FCODE e6[] = {"Table overflow"};
-   static FCODE e7[] = {"Didn't find matching ')' in symmetry declaration"};
-   static FCODE e8[] = {"No '{' found on first line"};
-   static FCODE e9[] = {"Unexpected EOF!"};
-   static FCODE e10[] = {"Symmetry below is invalid, will use NOSYM"};
-   static FCODE e11[] = {"Formula is too large"};
-   static FCODE e12[] = {"Insufficient memory to run fractal type 'formula'"};
-   static FCODE e13[] = {"Could not open file where formula located"};
-   static FCODE e14[] = {"No characters may precede jump instruction"};
-   static FCODE e15[] = {"No characters may follow this jump instruction"};
-   static FCODE e16[] = {"Jump instruction missing required (boolean argument)"};
-   static FCODE e17[] = {"Next jump after \"else\" must be \"endif\""};
-   static FCODE e18[] = {"\"endif\" has no matching \"if\""};
-   static FCODE e19[] = {"Misplaced \"else\" or \"elseif()\""};
-   static FCODE e20[] = {"\"if()\" in initialization has no matching \"endif\""};
-   static FCODE e21[] = {"\"if()\" has no matching \"endif\""};
-   static FCODE e22[] = {"Error in parsing jump statements"};
-   static FCODE e23[] = {"Formula has too many jump commands"};
-   static FCODE e24[] = {"Formula name has too many characters"};
-   static FCODE e25[] = {"Only variables are allowed to left of assignment"};
-   static FCODE e26[] = {"Illegal variable name"};
-   static FCODE e27[] = {"Invalid constant expression"};
-   static FCODE e28[] = {"This character not supported by parser"};
-   static FCODE e29[] = {"Nesting of parentheses exceeds maximum depth"};
-   static FCODE e30[] = {"Unmatched modulus operator \"|\" in this expression"}; /*last one */
-   static FCODE e31[] = {"Can't use function name as variable"};
-   static FCODE e32[] = {"Negative exponent must be enclosed in parens"};
-   static FCODE e33[] = {"Variable or constant exceeds 32 character limit"};
-   static FCODE e34[] = {"Only one \":\" permitted in a formula"};
-   static FCODE e35[] = {"Invalid ParseErrs code"};
-   static PFCODE ErrStrings[] = { e0,e1,e2,e3,e4,e5,
-                                  e6,e7,e8,e9,e10,
-                                  e11,e12,e13,e14,e15,
-                                  e16,e17,e18,e19,e20,
-                                  e21,e22,e23,e24,e25,
-                                  e26, e27, e28, e29, e30,
-                                  e31, e32, e33, e34, e35
-                                 };
-   lasterr = sizeof(ErrStrings)/sizeof(ErrStrings[0]) - 1;
-   if(which > lasterr)
-     which = lasterr;
-   return((char far *)ErrStrings[which]);
+   static char const __far e0[]  = "Should be an Argument";
+   static char const __far e1[]  = "Should be an Operator";
+   static char const __far e2[]  = "')' needs a matching '('";
+   static char const __far e3[]  = "Need more ')'";
+   static char const __far e4[]  = "Undefined Operator";
+   static char const __far e5[]  = "Undefined Function";
+   static char const __far e6[]  = "Table overflow";
+   static char const __far e7[]  = "Didn't find matching ')' in symmetry declaration";
+   static char const __far e8[]  = "No '{' found on first line";
+   static char const __far e9[]  = "Unexpected EOF!";
+   static char const __far e10[] = "Symmetry below is invalid, will use NOSYM";
+   static char const __far e11[] = "Formula is too large";
+   static char const __far e12[] = "Insufficient memory to run fractal type 'formula'";
+   static char const __far e13[] = "Could not open file where formula located";
+   static char const __far e14[] = "No characters may precede jump instruction";
+   static char const __far e15[] = "No characters may follow this jump instruction";
+   static char const __far e16[] = "Jump instruction missing required (boolean argument)";
+   static char const __far e17[] = "Next jump after \"else\" must be \"endif\"";
+   static char const __far e18[] = "\"endif\" has no matching \"if\"";
+   static char const __far e19[] = "Misplaced \"else\" or \"elseif()\"";
+   static char const __far e20[] = "\"if()\" in initialization has no matching \"endif\"";
+   static char const __far e21[] = "\"if()\" has no matching \"endif\"";
+   static char const __far e22[] = "Error in parsing jump statements";
+   static char const __far e23[] = "Formula has too many jump commands";
+   static char const __far e24[] = "Formula name has too many characters";
+   static char const __far e25[] = "Only variables are allowed to left of assignment";
+   static char const __far e26[] = "Illegal variable name";
+   static char const __far e27[] = "Invalid constant expression";
+   static char const __far e28[] = "This character not supported by parser";
+   static char const __far e29[] = "Nesting of parentheses exceeds maximum depth";
+   static char const __far e30[] = "Unmatched modulus operator \"|\" in this expression";
+   static char const __far e31[] = "Can't use function name as variable";
+   static char const __far e32[] = "Negative exponent must be enclosed in parens";
+   static char const __far e33[] = "Variable or constant exceeds 32 character limit";
+   static char const __far e34[] = "Only one \":\" permitted in a formula";
+   static char const __far e35[] = "Invalid ParseErrs code";
+   static char const __far* const ErrStrings[] = {
+   	e0,
+      e1,
+      e2,
+      e3,
+      e4,
+      e5,
+      e6,
+      e7,
+      e8,
+      e9,
+      e10,
+      e11,
+      e12,
+      e13,
+      e14,
+      e15,
+      e16,
+      e17,
+      e18,
+      e19,
+      e20,
+      e21,
+      e22,
+      e23,
+      e24,
+      e25,
+      e26,
+      e27,
+      e28,
+      e29,
+      e30,
+      e31,
+      e32,
+      e33,
+      e34,
+      e35 };
+   int lasterr = sizeof(ErrStrings)/sizeof(ErrStrings[0]) - 1;
+
+   if (which > lasterr)
+      which = lasterr;
+   return ErrStrings[which];
 }
 
 #if (_MSC_VER >= 700)
 #pragma code_seg ()       /* back to normal segment */
-#endif
-
-/* use the following when only float functions are implemented to
-   get MP math and Integer math */
-
-#ifndef XFRACT
-#define FUNCT
-#ifdef FUNCT /* use function form save space - isn't really slower */
-
-#if (_MSC_VER >= 700)
-#pragma code_seg ("mpmath1_text")     /* place following in an overlay */
-#endif
-static void mStkFunct(void (*fct)(void))   /* call lStk via dStk */
-{
-   Arg1->d = MPC2cmplx(Arg1->m);
-   (*fct)();
-   Arg1->m = cmplx2MPC(Arg1->d);
-}
-#if (_MSC_VER >= 700)
-#pragma code_seg ()       /* back to normal segment */
-#endif
-
-static void lStkFunct(void (*fct)(void))   /* call lStk via dStk */
-{
-   double y;
-   /*
-      intermediate variable needed for safety because of
-      different size of double and long in Arg union
-   */
-   y = (double)Arg1->l.y / fg;
-   Arg1->d.x = (double)Arg1->l.x / fg;
-   Arg1->d.y = y;
-   (*fct)();
-   if(fabs(Arg1->d.x) < fgLimit && fabs(Arg1->d.y) < fgLimit) {
-      Arg1->l.x = (long)(Arg1->d.x * fg);
-      Arg1->l.y = (long)(Arg1->d.y * fg);
-   }
-   else
-      overflow = 1;
-}
-#else  /* use Macro form for (?) greater speed */
-  /* call lStk via dStk */
-#define mStkFunct(fct)  \
-   Arg1->d = MPC2cmplx(Arg1->m);\
-   (*fct)();\
-   Arg1->m = cmplx2MPC(Arg1->d);
-
-
-/* call lStk via dStk */
-#define lStkFunct(fct) {\
-   LDBL y;\
-   y = (LDBL)Arg1->l.y / fg;\
-   Arg1->d.x = (LDBL)Arg1->l.x / fg;\
-   Arg1->d.y = y;\
-   (*fct)();\
-   if(fabsl(Arg1->d.x) < fgLimit && fabsl(Arg1->d.y) < fgLimit) {\
-      Arg1->l.x = (long)(Arg1->d.x * fg);\
-      Arg1->l.y = (long)(Arg1->d.y * fg);\
-   }\
-   else\
-      overflow = 1;\
-}
-
-
-#endif
-
 #endif
 
 /* Random number code, MCP 11-21-91 */
@@ -418,12 +356,6 @@ static void lStkFunct(void (*fct)(void))   /* call lStk via dStk */
 unsigned long NewRandNum(void)
 {
    return(RandNum = ((RandNum << 15) + rand15()) ^ RandNum);
-}
-
-void lRandom(void)
-{
-   v[7].a.l.x = NewRandNum() >> (32 - bitshift);
-   v[7].a.l.y = NewRandNum() >> (32 - bitshift);
 }
 
 void dRandom(void)
@@ -439,26 +371,12 @@ void dRandom(void)
 
 }
 
-#ifndef XFRACT
-void mRandom(void)
-{
-   long x, y;
-
-   /* Use the same algorithm as for fixed math so that they will generate
-      the same fractals when the srand() function is used. */
-   x = NewRandNum() >> (32 - bitshift);
-   y = NewRandNum() >> (32 - bitshift);
-   v[7].a.m.x = *fg2MP(x, bitshift);
-   v[7].a.m.y = *fg2MP(y, bitshift);
-}
-#endif
-
 void SetRandFnct(void)
 {
    unsigned Seed;
 
    if(!SetRandom)
-      RandNum = Arg1->l.x ^ Arg1->l.y;
+      RandNum = ((long*)&Arg1->d)[0] ^ ((long*)&Arg1->d)[1];
 
    Seed = (unsigned)RandNum ^ (unsigned)(RandNum >> 16);
    srand(Seed);
@@ -484,39 +402,17 @@ void RandomSeed(void)
    Randomized = 1;
 }
 
-#ifndef XFRACT
-void lStkSRand(void)
-{
-   SetRandFnct();
-   lRandom();
-   Arg1->l = v[7].a.l;
-}
-#endif
-
-#ifndef XFRACT
-void mStkSRand(void)
-{
-   Arg1->l.x = Arg1->m.x.Mant ^ (long)Arg1->m.x.Exp;
-   Arg1->l.y = Arg1->m.y.Mant ^ (long)Arg1->m.y.Exp;
-   SetRandFnct();
-   mRandom();
-   Arg1->m = v[7].a.m;
-}
-#endif
-
 void dStkSRand(void)
 {
-   Arg1->l.x = (long)(Arg1->d.x * (1L << bitshift));
-   Arg1->l.y = (long)(Arg1->d.y * (1L << bitshift));
+   ((long*)&Arg1->d)[0] = (long)(Arg1->d.x * (1L << bitshift));
+   ((long*)&Arg1->d)[1] = (long)(Arg1->d.y * (1L << bitshift));
    SetRandFnct();
    dRandom();
    Arg1->d = v[7].a.d;
 }
-
 void (*StkSRand)(void) = dStkSRand;
 
-
-void dStkLodDup()
+void dStkLodDup(void)
 {
    Arg1+=2;
    Arg2+=2;
@@ -577,28 +473,15 @@ void dStkSqr3()
 
 
 
-void dStkAbs(void) {
-   Arg1->d.x = fabsl(Arg1->d.x);
-   Arg1->d.y = fabsl(Arg1->d.y);
+void dStkAbs(void)
+{
+   Arg1->d.x = fabs(Arg1->d.x);
+   Arg1->d.y = fabs(Arg1->d.y);
 }
-
-#ifndef XFRACT
-void mStkAbs(void) {
-   if(Arg1->m.x.Exp < 0)
-      Arg1->m.x.Exp = -Arg1->m.x.Exp;
-   if(Arg1->m.y.Exp < 0)
-      Arg1->m.y.Exp = -Arg1->m.y.Exp;
-}
-
-void lStkAbs(void) {
-   Arg1->l.x = labs(Arg1->l.x);
-   Arg1->l.y = labs(Arg1->l.y);
-}
-#endif
-
 void (*StkAbs)(void) = dStkAbs;
 
-void dStkSqr(void) {
+void dStkSqr(void)
+{
    LastSqr.d.x = Arg1->d.x * Arg1->d.x;
    LastSqr.d.y = Arg1->d.y * Arg1->d.y;
    Arg1->d.y = Arg1->d.x * Arg1->d.y * 2.0;
@@ -606,416 +489,128 @@ void dStkSqr(void) {
    LastSqr.d.x += LastSqr.d.y;
    LastSqr.d.y = 0.0;
 }
-
-#ifndef XFRACT
-void mStkSqr(void) {
-   LastSqr.m.x = *MPmul(Arg1->m.x, Arg1->m.x);
-   LastSqr.m.y = *MPmul(Arg1->m.y, Arg1->m.y);
-   Arg1->m.y = *MPmul(Arg1->m.x, Arg1->m.y);
-   Arg1->m.y.Exp++;
-   Arg1->m.x = *MPsub(LastSqr.m.x, LastSqr.m.y);
-   LastSqr.m.x = *MPadd(LastSqr.m.x, LastSqr.m.y);
-   LastSqr.m.y.Mant = (long)(LastSqr.m.y.Exp = 0);
-}
-
-void lStkSqr(void) {
-   LastSqr.l.x = multiply(Arg1->l.x, Arg1->l.x, bitshift);
-   LastSqr.l.y = multiply(Arg1->l.y, Arg1->l.y, bitshift);
-   Arg1->l.y = multiply(Arg1->l.x, Arg1->l.y, bitshift) << 1;
-   Arg1->l.x = LastSqr.l.x - LastSqr.l.y;
-   LastSqr.l.x += LastSqr.l.y;
-   LastSqr.l.y = 0L;
-}
-#endif
-
 void (*StkSqr)(void) = dStkSqr;
 
-void dStkAdd(void) {
+void dStkAdd(void)
+{
    Arg2->d.x += Arg1->d.x;
    Arg2->d.y += Arg1->d.y;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-
-#if (_MSC_VER >= 700)
-#pragma code_seg ("mpmath1_text")     /* place following in an overlay */
-#endif
-void mStkAdd(void) {
-   Arg2->m = MPCadd(Arg2->m, Arg1->m);
-   Arg1--;
-   Arg2--;
-}
-#if (_MSC_VER >= 700)
-#pragma code_seg ()       /* back to normal segment */
-#endif
-
-void lStkAdd(void) {
-   Arg2->l.x += Arg1->l.x;
-   Arg2->l.y += Arg1->l.y;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkAdd)(void) = dStkAdd;
 
-void dStkSub(void) {
+void dStkSub(void)
+{
    Arg2->d.x -= Arg1->d.x;
    Arg2->d.y -= Arg1->d.y;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-#if (_MSC_VER >= 700)
-#pragma code_seg ("mpmath1_text")     /* place following in an overlay */
-#endif
-void mStkSub(void) {
-   Arg2->m = MPCsub(Arg2->m, Arg1->m);
-   Arg1--;
-   Arg2--;
-}
-#if (_MSC_VER >= 700)
-#pragma code_seg ()       /* back to normal segment */
-#endif
-
-void lStkSub(void) {
-   Arg2->l.x -= Arg1->l.x;
-   Arg2->l.y -= Arg1->l.y;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkSub)(void) = dStkSub;
 
-void dStkConj(void) {
+void dStkConj(void)
+{
    Arg1->d.y = -Arg1->d.y;
 }
-
-#ifndef XFRACT
-void mStkConj(void) {
-   Arg1->m.y.Exp ^= 0x8000;
-}
-
-void lStkConj(void) {
-   Arg1->l.y = -Arg1->l.y;
-}
-#endif
-
 void (*StkConj)(void) = dStkConj;
 
-void dStkFloor(void) {
-   Arg1->d.x = floorl(Arg1->d.x);
-   Arg1->d.y = floorl(Arg1->d.y);
+void dStkFloor(void)
+{
+   Arg1->d.x = floor(Arg1->d.x);
+   Arg1->d.y = floor(Arg1->d.y);
 }
-
-#ifndef XFRACT
-void mStkFloor(void) {
-   mStkFunct(dStkFloor);   /* call lStk via dStk */
-}
-
-void lStkFloor(void) {
-   /*
-    * Kill fractional part. This operation truncates negative numbers
-    * toward negative infinity as desired.
-    */
-   Arg1->l.x = (Arg1->l.x) >> bitshift;
-   Arg1->l.y = (Arg1->l.y) >> bitshift;
-   Arg1->l.x = (Arg1->l.x) << bitshift;
-   Arg1->l.y = (Arg1->l.y) << bitshift;
-}
-#endif
-
 void (*StkFloor)(void) = dStkFloor;
 
-void dStkCeil(void) {
-   Arg1->d.x = ceill(Arg1->d.x);
-   Arg1->d.y = ceill(Arg1->d.y);
+void dStkCeil(void)
+{
+   Arg1->d.x = ceil(Arg1->d.x);
+   Arg1->d.y = ceil(Arg1->d.y);
 }
-
-#ifndef XFRACT
-void mStkCeil(void) {
-   mStkFunct(dStkCeil);   /* call lStk via dStk */
-}
-
-void lStkCeil(void) {
-   /* the shift operation does the "floor" operation, so we
-      negate everything before the operation */
-   Arg1->l.x = (-Arg1->l.x) >> bitshift;
-   Arg1->l.y = (-Arg1->l.y) >> bitshift;
-   Arg1->l.x = -((Arg1->l.x) << bitshift);
-   Arg1->l.y = -((Arg1->l.y) << bitshift);
-}
-#endif
-
 void (*StkCeil)(void) = dStkCeil;
 
-void dStkTrunc(void) {
-   Arg1->d.x = (long)(Arg1->d.x);
-   Arg1->d.y = (long)(Arg1->d.y);
+void dStkTrunc(void)
+{
+   Arg1->d.x = Arg1->d.x >= 0.0 ? floor(Arg1->d.x) : ceil(Arg1->d.x);
+   Arg1->d.y = Arg1->d.y >= 0.0 ? floor(Arg1->d.y) : ceil(Arg1->d.y);
 }
-
-#ifndef XFRACT
-void mStkTrunc(void) {
-   mStkFunct(dStkTrunc);   /* call lStk via dStk */
-}
-
-void lStkTrunc(void) {
-   /* shifting and shifting back truncates positive numbers,
-      so we make the numbers positive */
-   int signx, signy;
-   signx = sign(Arg1->l.x);
-   signy = sign(Arg1->l.y);
-   Arg1->l.x = labs(Arg1->l.x);
-   Arg1->l.y = labs(Arg1->l.y);
-   Arg1->l.x = (Arg1->l.x) >> bitshift;
-   Arg1->l.y = (Arg1->l.y) >> bitshift;
-   Arg1->l.x = (Arg1->l.x) << bitshift;
-   Arg1->l.y = (Arg1->l.y) << bitshift;
-   Arg1->l.x = signx*Arg1->l.x;
-   Arg1->l.y = signy*Arg1->l.y;
-}
-#endif
-
 void (*StkTrunc)(void) = dStkTrunc;
 
-void dStkRound(void) {
-   Arg1->d.x = floorl(Arg1->d.x+.5);
-   Arg1->d.y = floorl(Arg1->d.y+.5);
+void dStkRound(void)
+{
+   Arg1->d.x = floor(Arg1->d.x + 0.5);
+   Arg1->d.y = floor(Arg1->d.y + 0.5);
 }
-
-#ifndef XFRACT
-void mStkRound(void) {
-   mStkFunct(dStkRound);   /* call lStk via dStk */
-}
-
-void lStkRound(void) {
-   /* Add .5 then truncate */
-   Arg1->l.x += (1L<<bitshiftless1);
-   Arg1->l.y += (1L<<bitshiftless1);
-   lStkFloor();
-}
-#endif
-
 void (*StkRound)(void) = dStkRound;
 
-void dStkZero(void) {
+void dStkZero(void)
+{
    Arg1->d.y = Arg1->d.x = 0.0;
 }
-
-#ifndef XFRACT
-void mStkZero(void) {
-   Arg1->m.x.Mant = Arg1->m.x.Exp = 0;
-   Arg1->m.y.Mant = Arg1->m.y.Exp = 0;
-}
-
-void lStkZero(void) {
-   Arg1->l.y = Arg1->l.x = 0;
-}
-#endif
-
 void (*StkZero)(void) = dStkZero;
 
-void dStkOne(void) {
+void dStkOne(void)
+{
    Arg1->d.x = 1.0;
    Arg1->d.y = 0.0;
 }
-
-#ifndef XFRACT
-void mStkOne(void) {
-   Arg1->m = MPCone;
-}
-
-void lStkOne(void) {
-   Arg1->l.x = (long) fg;
-   Arg1->l.y = 0L;
-}
-#endif
-
 void (*StkOne)(void) = dStkOne;
 
-
-void dStkReal(void) {
+void dStkReal(void)
+{
    Arg1->d.y = 0.0;
 }
-
-#ifndef XFRACT
-void mStkReal(void) {
-   Arg1->m.y.Mant = (long)(Arg1->m.y.Exp = 0);
-}
-
-void lStkReal(void) {
-   Arg1->l.y = 0l;
-}
-#endif
-
 void (*StkReal)(void) = dStkReal;
 
-void dStkImag(void) {
+void dStkImag(void)
+{
    Arg1->d.x = Arg1->d.y;
    Arg1->d.y = 0.0;
 }
-
-#ifndef XFRACT
-void mStkImag(void) {
-   Arg1->m.x = Arg1->m.y;
-   Arg1->m.y.Mant = (long)(Arg1->m.y.Exp = 0);
-}
-
-void lStkImag(void) {
-   Arg1->l.x = Arg1->l.y;
-   Arg1->l.y = 0l;
-}
-#endif
-
 void (*StkImag)(void) = dStkImag;
 
-void dStkNeg(void) {
+void dStkNeg(void)
+{
    Arg1->d.x = -Arg1->d.x;
    Arg1->d.y = -Arg1->d.y;
 }
-
-#ifndef XFRACT
-void mStkNeg(void) {
-   Arg1->m.x.Exp ^= 0x8000;
-   Arg1->m.y.Exp ^= 0x8000;
-}
-
-void lStkNeg(void) {
-   Arg1->l.x = -Arg1->l.x;
-   Arg1->l.y = -Arg1->l.y;
-}
-#endif
-
 void (*StkNeg)(void) = dStkNeg;
 
-void dStkMul(void) {
+void dStkMul(void)
+{
    FPUcplxmul(&Arg2->d, &Arg1->d, &Arg2->d);
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-#if (_MSC_VER >= 700)
-#pragma code_seg ("mpmath1_text")     /* place following in an overlay */
-#endif
-void mStkMul(void) {
-   Arg2->m = MPCmul(Arg2->m, Arg1->m);
-   Arg1--;
-   Arg2--;
-}
-#if (_MSC_VER >= 700)
-#pragma code_seg ()       /* back to normal segment */
-#endif
-
-void lStkMul(void) {
-   long x, y;
-
-   x = multiply(Arg2->l.x, Arg1->l.x, bitshift) -
-   multiply(Arg2->l.y, Arg1->l.y, bitshift);
-   y = multiply(Arg2->l.y, Arg1->l.x, bitshift) +
-   multiply(Arg2->l.x, Arg1->l.y, bitshift);
-   Arg2->l.x = x;
-   Arg2->l.y = y;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkMul)(void) = dStkMul;
 
-void dStkDiv(void) {
+void dStkDiv(void)
+{
    FPUcplxdiv(&Arg2->d, &Arg1->d, &Arg2->d);
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-#if (_MSC_VER >= 700)
-#pragma code_seg ("mpmath1_text")     /* place following in an overlay */
-#endif
-void mStkDiv(void) {
-   Arg2->m = MPCdiv(Arg2->m, Arg1->m);
-   Arg1--;
-   Arg2--;
-}
-#if (_MSC_VER >= 700)
-#pragma code_seg ()       /* back to normal segment */
-#endif
-
-void lStkDiv(void) {
-   long x, y, mod, x2, y2;
-
-   mod = multiply(Arg1->l.x, Arg1->l.x, bitshift) +
-   multiply(Arg1->l.y, Arg1->l.y, bitshift);
-   x = divide(Arg1->l.x, mod, bitshift);
-   y = -divide(Arg1->l.y, mod, bitshift);
-   /* pb 900617 changed next 4 lines to use x2,y2 instead of x,y */
-   x2 = multiply(Arg2->l.x, x, bitshift) - multiply(Arg2->l.y, y, bitshift);
-   y2 = multiply(Arg2->l.y, x, bitshift) + multiply(Arg2->l.x, y, bitshift);
-   Arg2->l.x = x2;
-   Arg2->l.y = y2;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkDiv)(void) = dStkDiv;
 
-void dStkMod(void) {
+void dStkMod(void)
+{
    Arg1->d.x = (Arg1->d.x * Arg1->d.x) + (Arg1->d.y * Arg1->d.y);
    Arg1->d.y = 0.0;
 }
-
-#ifndef XFRACT
-#if (_MSC_VER >= 700)
-#pragma code_seg ("mpmath1_text")     /* place following in an overlay */
-#endif
-void mStkMod(void) {
-   Arg1->m.x = MPCmod(Arg1->m);
-   Arg1->m.y.Mant = (long)(Arg1->m.y.Exp = 0);
-}
-#if (_MSC_VER >= 700)
-#pragma code_seg ()       /* back to normal segment */
-#endif
-
-void lStkMod(void) {
-/*   Arg1->l.x = multiply(Arg2->l.x, Arg1->l.x, bitshift) + */
-/*   multiply(Arg2->l.y, Arg1->l.y, bitshift); */
-/*** I don't understand how this ever worked correctly! JCO 12/31/94 ***/
-   Arg1->l.x = multiply(Arg1->l.x, Arg1->l.x, bitshift) +
-   multiply(Arg1->l.y, Arg1->l.y, bitshift);
-   if(Arg1->l.x < 0)
-      overflow = 1;
-   Arg1->l.y = 0L;
-}
-
-void lStkModOld(void) {
-   Arg1->l.x = multiply(Arg2->l.x, Arg1->l.x, bitshift) +
-   multiply(Arg2->l.y, Arg1->l.y, bitshift);
-   if(Arg1->l.x < 0)
-      overflow = 1;
-   Arg1->l.y = 0L;
-}
-#endif
-
 void (*StkMod)(void) = dStkMod;
 
-void StkSto(void) {
+void StkSto(void)
+{
    *Store[StoPtr++] = *Arg1;
 }
-
 void (*PtrStkSto)(void) = StkSto;
 
-void StkLod(void) {
+void StkLod(void)
+{
    Arg1++;
    Arg2++;
    *Arg1 = *Load[LodPtr++];
 }
-
 void (*PtrStkLod)(void) = StkLod;
 
 void StkClr(void) {
@@ -1029,66 +624,31 @@ void (*PtrStkClr)(void) = StkClr;
 
 /* MCP 4-9-91, Added Flip() */
 
-void dStkFlip(void) {
-   LDBL t;
-
-   t = Arg1->d.x;
+void dStkFlip(void)
+{
+   double t = Arg1->d.x;
    Arg1->d.x = Arg1->d.y;
    Arg1->d.y = t;
 }
-
-#ifndef XFRACT
-void mStkFlip(void) {
-   struct MP t;
-
-   t = Arg1->m.x;
-   Arg1->m.x = Arg1->m.y;
-   Arg1->m.y = t;
-}
-
-void lStkFlip(void) {
-   long t;
-
-   t = Arg1->l.x;
-   Arg1->l.x = Arg1->l.y;
-   Arg1->l.y = t;
-}
-#endif
-
 void (*StkFlip)(void) = dStkFlip;
 
-void dStkSin(void) {
-   LDBL sinx, cosx, sinhy, coshy;
+void dStkSin(void)
+{
+   double sinx, cosx, sinhy, coshy;
 
    FPUsincos(&Arg1->d.x, &sinx, &cosx);
    FPUsinhcosh(&Arg1->d.y, &sinhy, &coshy);
    Arg1->d.x = sinx*coshy;
    Arg1->d.y = cosx*sinhy;
 }
-
-#ifndef XFRACT
-void mStkSin(void) {
-   mStkFunct(dStkSin);   /* call lStk via dStk */
-}
-
-void lStkSin(void) {
-   long x, y, sinx, cosx, sinhy, coshy;
-   x = Arg1->l.x >> Delta16;
-   y = Arg1->l.y >> Delta16;
-   SinCos086(x, &sinx, &cosx);
-   SinhCosh086(y, &sinhy, &coshy);
-   Arg1->l.x = multiply(sinx, coshy, ShiftBack); /* TIW 06-18-90 */
-   Arg1->l.y = multiply(cosx, sinhy, ShiftBack); /* TIW 06-18-90 */
-}
-#endif
-
 void (*StkSin)(void) = dStkSin;
 
 /* The following functions are supported by both the parser and for fn
    variable replacement. TIW 04-22-91 */
 
-void dStkTan(void) {
-   LDBL sinx, cosx, sinhy, coshy, denom;
+void dStkTan(void)
+{
+   double sinx, cosx, sinhy, coshy, denom;
    Arg1->d.x *= 2.0;
    Arg1->d.y *= 2.0;
    FPUsincos(&Arg1->d.x, &sinx, &cosx);
@@ -1098,31 +658,11 @@ void dStkTan(void) {
    Arg1->d.x = sinx/denom;
    Arg1->d.y = sinhy/denom;
 }
-
-#ifndef XFRACT
-void mStkTan(void) {
-   mStkFunct(dStkTan);   /* call lStk via dStk */
-}
-
-void lStkTan(void) {
-   long x, y, sinx, cosx, sinhy, coshy, denom;
-   x = Arg1->l.x >> Delta16;
-   x = x << 1;
-   y = Arg1->l.y >> Delta16;
-   y = y << 1;
-   SinCos086(x, &sinx, &cosx);
-   SinhCosh086(y, &sinhy, &coshy);
-   denom = cosx + coshy;
-   ChkLongDenom(denom);
-   Arg1->l.x = divide(sinx,denom,bitshift);
-   Arg1->l.y = divide(sinhy,denom,bitshift);
-}
-#endif
-
 void (*StkTan)(void) = dStkTan;
 
-void dStkTanh(void) {
-   LDBL siny, cosy, sinhx, coshx, denom;
+void dStkTanh(void)
+{
+   double siny, cosy, sinhx, coshx, denom;
    Arg1->d.x *= 2.0;
    Arg1->d.y *= 2.0;
    FPUsincos(&Arg1->d.y, &siny, &cosy);
@@ -1132,31 +672,11 @@ void dStkTanh(void) {
    Arg1->d.x = sinhx/denom;
    Arg1->d.y = siny/denom;
 }
-
-#ifndef XFRACT
-void mStkTanh(void) {
-   mStkFunct(dStkTanh);   /* call lStk via dStk */
-}
-
-void lStkTanh(void) {
-   long x, y, siny, cosy, sinhx, coshx, denom;
-   x = Arg1->l.x >> Delta16;
-   x = x << 1;
-   y = Arg1->l.y >> Delta16;
-   y = y << 1;
-   SinCos086(y, &siny, &cosy);
-   SinhCosh086(x, &sinhx, &coshx);
-   denom = coshx + cosy;
-   ChkLongDenom(denom);
-   Arg1->l.x = divide(sinhx,denom,bitshift);
-   Arg1->l.y = divide(siny,denom,bitshift);
-}
-#endif
-
 void (*StkTanh)(void) = dStkTanh;
 
-void dStkCoTan(void) {
-   LDBL sinx, cosx, sinhy, coshy, denom;
+void dStkCoTan(void)
+{
+   double sinx, cosx, sinhy, coshy, denom;
    Arg1->d.x *= 2.0;
    Arg1->d.y *= 2.0;
    FPUsincos(&Arg1->d.x, &sinx, &cosx);
@@ -1166,31 +686,11 @@ void dStkCoTan(void) {
    Arg1->d.x = sinx/denom;
    Arg1->d.y = -sinhy/denom;
 }
-
-#ifndef XFRACT
-void mStkCoTan(void) {
-   mStkFunct(dStkCoTan);   /* call lStk via dStk */
-}
-
-void lStkCoTan(void) {
-   long x, y, sinx, cosx, sinhy, coshy, denom;
-   x = Arg1->l.x >> Delta16;
-   x = x << 1;
-   y = Arg1->l.y >> Delta16;
-   y = y << 1;
-   SinCos086(x, &sinx, &cosx);
-   SinhCosh086(y, &sinhy, &coshy);
-   denom = coshy - cosx;
-   ChkLongDenom(denom);
-   Arg1->l.x = divide(sinx,denom,bitshift);
-   Arg1->l.y = -divide(sinhy,denom,bitshift);
-}
-#endif
-
 void (*StkCoTan)(void) = dStkCoTan;
 
-void dStkCoTanh(void) {
-   LDBL siny, cosy, sinhx, coshx, denom;
+void dStkCoTanh(void)
+{
+   double siny, cosy, sinhx, coshx, denom;
    Arg1->d.x *= 2.0;
    Arg1->d.y *= 2.0;
    FPUsincos(&Arg1->d.y, &siny, &cosy);
@@ -1200,27 +700,6 @@ void dStkCoTanh(void) {
    Arg1->d.x = sinhx/denom;
    Arg1->d.y = -siny/denom;
 }
-
-#ifndef XFRACT
-void mStkCoTanh(void) {
-   mStkFunct(dStkCoTanh);   /* call lStk via dStk */
-}
-
-void lStkCoTanh(void) {
-   long x, y, siny, cosy, sinhx, coshx, denom;
-   x = Arg1->l.x >> Delta16;
-   x = x << 1;
-   y = Arg1->l.y >> Delta16;
-   y = y << 1;
-   SinCos086(y, &siny, &cosy);
-   SinhCosh086(x, &sinhx, &coshx);
-   denom = coshx - cosy;
-   ChkLongDenom(denom);
-   Arg1->l.x = divide(sinhx,denom,bitshift);
-   Arg1->l.y = -divide(siny,denom,bitshift);
-}
-#endif
-
 void (*StkCoTanh)(void) = dStkCoTanh;
 
 /* The following functions are not directly used by the parser - support
@@ -1229,513 +708,198 @@ void (*StkCoTanh)(void) = dStkCoTanh;
    in miscres.c but are placed here because they follow the pattern of
    the other parser functions. TIW 04-22-91 */
 
-void dStkRecip(void) {
-   LDBL mod;
+void dStkRecip(void)
+{
+   double mod;
    mod =Arg1->d.x * Arg1->d.x + Arg1->d.y * Arg1->d.y;
    ChkFloatDenom(mod);
    Arg1->d.x =  Arg1->d.x/mod;
    Arg1->d.y = -Arg1->d.y/mod;
 }
-
-#ifndef XFRACT
-void mStkRecip(void) {
-   struct MP mod;
-   mod = *MPadd(*MPmul(Arg1->m.x, Arg1->m.x),*MPmul(Arg1->m.y, Arg1->m.y));
-   if(mod.Mant == 0L) {
-      overflow = 1;
-      return;
-   }
-   Arg1->m.x = *MPdiv(Arg1->m.x,mod);
-   Arg1->m.y = *MPdiv(Arg1->m.y,mod);
-   Arg1->m.y.Exp ^= 0x8000;
-}
-
-void lStkRecip(void) {
-   long mod;
-   mod = multiply(Arg1->l.x,Arg1->l.x,bitshift)
-      + multiply(Arg1->l.y,Arg1->l.y,bitshift);
-   if(save_release > 1920) {
-      ChkLongDenom(mod);
-   } else if(mod<=0L) return;
-   Arg1->l.x =  divide(Arg1->l.x,mod,bitshift);
-   Arg1->l.y = -divide(Arg1->l.y,mod,bitshift);
-}
-#endif
+void (*StkRecip)(void) = dStkRecip;
 
 void StkIdent(void) { /* do nothing - the function Z */
 }
 /* End TIW 04-22-91 */
 
-void dStkSinh(void) {
-   LDBL siny, cosy, sinhx, coshx;
+void dStkSinh(void)
+{
+   double siny, cosy, sinhx, coshx;
 
    FPUsincos(&Arg1->d.y, &siny, &cosy);
    FPUsinhcosh(&Arg1->d.x, &sinhx, &coshx);
    Arg1->d.x = sinhx*cosy;
    Arg1->d.y = coshx*siny;
 }
-
-#ifndef XFRACT
-void mStkSinh(void) {
-   mStkFunct(dStkSinh);   /* call lStk via dStk */
-}
-
-void lStkSinh(void) {
-   long x, y, sinhx, coshx, siny, cosy;
-
-   x = Arg1->l.x >> Delta16;
-   y = Arg1->l.y >> Delta16;
-   SinCos086(y, &siny, &cosy);
-   SinhCosh086(x, &sinhx, &coshx);
-   Arg1->l.x = multiply(cosy, sinhx, ShiftBack); /* TIW 06-18-90 */
-   Arg1->l.y = multiply(siny, coshx, ShiftBack); /* TIW 06-18-90 */
-}
-#endif
-
 void (*StkSinh)(void) = dStkSinh;
 
-void dStkCos(void) {
-   LDBL sinx, cosx, sinhy, coshy;
+void dStkCos(void)
+{
+   double sinx, cosx, sinhy, coshy;
 
    FPUsincos(&Arg1->d.x, &sinx, &cosx);
    FPUsinhcosh(&Arg1->d.y, &sinhy, &coshy);
    Arg1->d.x = cosx*coshy;
    Arg1->d.y = -sinx*sinhy; /* TIW 04-25-91 sign */
 }
-
-#ifndef XFRACT
-void mStkCos(void) {
-   mStkFunct(dStkCos);   /* call lStk via dStk */
-}
-
-void lStkCos(void) {
-   long x, y, sinx, cosx, sinhy, coshy;
-
-   x = Arg1->l.x >> Delta16;
-   y = Arg1->l.y >> Delta16;
-   SinCos086(x, &sinx, &cosx);
-   SinhCosh086(y, &sinhy, &coshy);
-   Arg1->l.x = multiply(cosx, coshy, ShiftBack); /* TIW 06-18-90 */
-   Arg1->l.y = -multiply(sinx, sinhy, ShiftBack); /* TIW 04-25-91 sign */
-}
-#endif
-
 void (*StkCos)(void) = dStkCos;
 
 /* Bogus version of cos, to replicate bug which was in regular cos till v16: */
 
-void dStkCosXX(void) {
+void dStkCosXX(void)
+{
    dStkCos();
    Arg1->d.y = -Arg1->d.y;
 }
-
-#ifndef XFRACT
-void mStkCosXX(void) {
-   mStkFunct(dStkCosXX);   /* call lStk via dStk */
-}
-
-void lStkCosXX(void) {
-   lStkCos();
-   Arg1->l.y = -Arg1->l.y;
-}
-#endif
-
 void (*StkCosXX)(void) = dStkCosXX;
 
-void dStkCosh(void) {
-   LDBL siny, cosy, sinhx, coshx;
+void dStkCosh(void)
+{
+   double siny, cosy, sinhx, coshx;
 
    FPUsincos(&Arg1->d.y, &siny, &cosy);
    FPUsinhcosh(&Arg1->d.x, &sinhx, &coshx);
    Arg1->d.x = coshx*cosy;
    Arg1->d.y = sinhx*siny;
 }
-
-#ifndef XFRACT
-void mStkCosh(void) {
-   mStkFunct(dStkCosh);   /* call lStk via dStk */
-}
-
-void lStkCosh(void) {
-   long x, y, sinhx, coshx, siny, cosy;
-
-   x = Arg1->l.x >> Delta16;
-   y = Arg1->l.y >> Delta16;
-   SinCos086(y, &siny, &cosy);
-   SinhCosh086(x, &sinhx, &coshx);
-   Arg1->l.x = multiply(cosy, coshx, ShiftBack); /* TIW 06-18-90 */
-   Arg1->l.y = multiply(siny, sinhx, ShiftBack); /* TIW 06-18-90 */
-}
-#endif
-
 void (*StkCosh)(void) = dStkCosh;
 
 /* TIW added arc functions here 11-25-94 */
 
-void dStkASin(void) {
+void dStkASin(void)
+{
    Arcsinz(Arg1->d, &(Arg1->d));
 }
-
-#ifndef XFRACT
-void mStkASin(void) {
-   mStkFunct(dStkASin);
-}
-
-void lStkASin(void) {
-   lStkFunct(dStkASin);
-}
-#endif
-
 void (*StkASin)(void) = dStkASin;
 
-void dStkASinh(void) {
+void dStkASinh(void)
+{
    Arcsinhz(Arg1->d, &(Arg1->d));
 }
-
-#ifndef XFRACT
-void mStkASinh(void) {
-   mStkFunct(dStkASinh);
-}
-
-void lStkASinh(void) {
-   lStkFunct(dStkASinh);
-}
-#endif
-
 void (*StkASinh)(void) = dStkASinh;
 
-void dStkACos(void) {
+void dStkACos(void)
+{
    Arccosz(Arg1->d, &(Arg1->d));
 }
-
-#ifndef XFRACT
-void mStkACos(void) {
-   mStkFunct(dStkACos);
-}
-
-void lStkACos(void) {
-   lStkFunct(dStkACos);
-}
-#endif
-
 void (*StkACos)(void) = dStkACos;
 
-void dStkACosh(void) {
+void dStkACosh(void)
+{
    Arccoshz(Arg1->d, &(Arg1->d));
 }
-
-#ifndef XFRACT
-void mStkACosh(void) {
-   mStkFunct(dStkACosh);
-}
-
-void lStkACosh(void) {
-   lStkFunct(dStkACosh);
-}
-#endif
-
 void (*StkACosh)(void) = dStkACosh;
 
-void dStkATan(void) {
+void dStkATan(void)
+{
    Arctanz(Arg1->d, &(Arg1->d));
 }
-
-#ifndef XFRACT
-void mStkATan(void) {
-   mStkFunct(dStkATan);
-}
-
-void lStkATan(void) {
-   lStkFunct(dStkATan);
-}
-#endif
-
 void (*StkATan)(void) = dStkATan;
 
-void dStkATanh(void) {
+void dStkATanh(void)
+{
    Arctanhz(Arg1->d, &(Arg1->d));
 }
-
-#ifndef XFRACT
-void mStkATanh(void) {
-   mStkFunct(dStkATanh);
-}
-
-void lStkATanh(void) {
-   lStkFunct(dStkATanh);
-}
-#endif
-
 void (*StkATanh)(void) = dStkATanh;
 
-void dStkSqrt(void) {
+void dStkSqrt(void)
+{
    Arg1->d = ComplexSqrtFloat(Arg1->d.x, Arg1->d.y);
 }
-
-#ifndef XFRACT
-void mStkSqrt(void) {
-   mStkFunct(dStkSqrt);
-}
-
-void lStkSqrt(void) {
-   /* lStkFunct(dStkSqrt); */
-   Arg1->l = ComplexSqrtLong(Arg1->l.x, Arg1->l.y);
-}
-#endif
-
 void (*StkSqrt)(void) = dStkSqrt;
 
-void dStkCAbs(void) {
-   Arg1->d.x = sqrtl(sqr(Arg1->d.x)+sqr(Arg1->d.y));
+void dStkCAbs(void)
+{
+   Arg1->d.x = hypot(Arg1->d.x, Arg1->d.y);
    Arg1->d.y = 0.0;
 }
-
-#ifndef XFRACT
-void mStkCAbs(void) {
-   mStkFunct(dStkCAbs);
-}
-
-void lStkCAbs(void) {
-   lStkFunct(dStkCAbs);
-}
-#endif
-
 void (*StkCAbs)(void) = dStkCAbs;
 
 /* TIW end arc functions 11-25-94 */
 
-void dStkLT(void) {
-   Arg2->d.x = (LDBL)(Arg2->d.x < Arg1->d.x);
+void dStkLT(void)
+{
+   Arg2->d.x = (double)(Arg2->d.x < Arg1->d.x);
    Arg2->d.y = 0.0;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-void mStkLT(void) {
-   Arg2->m.x = *fg2MP((long)(MPcmp(Arg2->m.x, Arg1->m.x) == -1), 0);
-   Arg2->m.y.Mant = (long)(Arg2->m.y.Exp = 0);
-   Arg1--;
-   Arg2--;
-}
-
-void lStkLT(void) {
-   Arg2->l.x = (long)(Arg2->l.x < Arg1->l.x) << bitshift; /* JCO 12/26/94 */
-   Arg2->l.y = 0l;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkLT)(void) = dStkLT;
 
-void dStkGT(void) {
-   Arg2->d.x = (LDBL)(Arg2->d.x > Arg1->d.x);
+void dStkGT(void)
+{
+   Arg2->d.x = (double)(Arg2->d.x > Arg1->d.x);
    Arg2->d.y = 0.0;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-void mStkGT(void) {
-   Arg2->m.x = *fg2MP((long)(MPcmp(Arg2->m.x, Arg1->m.x) == 1), 0);
-   Arg2->m.y.Mant = (long)(Arg2->m.y.Exp = 0);
-   Arg1--;
-   Arg2--;
-}
-
-void lStkGT(void) {
-   Arg2->l.x = (long)(Arg2->l.x > Arg1->l.x) << bitshift; /* JCO 12/26/94 */
-   Arg2->l.y = 0l;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkGT)(void) = dStkGT;
 
-void dStkLTE(void) {
-   Arg2->d.x = (LDBL)(Arg2->d.x <= Arg1->d.x);
+void dStkLTE(void)
+{
+   Arg2->d.x = (double)(Arg2->d.x <= Arg1->d.x);
    Arg2->d.y = 0.0;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-void mStkLTE(void) {
-   int comp;
-
-   comp = MPcmp(Arg2->m.x, Arg1->m.x);
-   Arg2->m.x = *fg2MP((long)(comp == -1 || comp == 0), 0);
-   Arg2->m.y.Mant = (long)(Arg2->m.y.Exp = 0);
-   Arg1--;
-   Arg2--;
-}
-
-void lStkLTE(void) {
-   Arg2->l.x = (long)(Arg2->l.x <= Arg1->l.x) << bitshift; /* JCO 12/26/94 */
-   Arg2->l.y = 0l;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkLTE)(void) = dStkLTE;
 
-void dStkGTE(void) {
-   Arg2->d.x = (LDBL)(Arg2->d.x >= Arg1->d.x);
+void dStkGTE(void)
+{
+   Arg2->d.x = (double)(Arg2->d.x >= Arg1->d.x);
    Arg2->d.y = 0.0;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-void mStkGTE(void) {
-   int comp;
-
-   comp = MPcmp(Arg2->m.x, Arg1->m.x);
-   Arg2->m.x = *fg2MP((long)(comp == 1 || comp == 0), 0);
-   Arg2->m.y.Mant = (long)(Arg2->m.y.Exp = 0);
-   Arg1--;
-   Arg2--;
-}
-
-void lStkGTE(void) {
-   Arg2->l.x = (long)(Arg2->l.x >= Arg1->l.x) << bitshift; /* JCO 12/26/94 */
-   Arg2->l.y = 0l;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkGTE)(void) = dStkGTE;
 
-void dStkEQ(void) {
-   Arg2->d.x = (LDBL)(Arg2->d.x == Arg1->d.x);
+void dStkEQ(void)
+{
+   Arg2->d.x = (double)(Arg2->d.x == Arg1->d.x);
    Arg2->d.y = 0.0;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-void mStkEQ(void) {
-   int comp;
-
-   comp = MPcmp(Arg2->m.x, Arg1->m.x);
-   Arg2->m.x = *fg2MP((long)(comp == 0), 0);
-   Arg2->m.y.Mant = (long)(Arg2->m.y.Exp = 0);
-   Arg1--;
-   Arg2--;
-}
-
-void lStkEQ(void) {
-   Arg2->l.x = (long)(Arg2->l.x == Arg1->l.x) << bitshift; /* JCO 12/26/94 */
-   Arg2->l.y = 0l;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkEQ)(void) = dStkEQ;
 
-void dStkNE(void) {
-   Arg2->d.x = (LDBL)(Arg2->d.x != Arg1->d.x);
+void dStkNE(void)
+{
+   Arg2->d.x = (double)(Arg2->d.x != Arg1->d.x);
    Arg2->d.y = 0.0;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-void mStkNE(void) {
-   int comp;
-
-   comp = MPcmp(Arg2->m.x, Arg1->m.x);
-   Arg2->m.x = *fg2MP((long)(comp != 0), 0);
-   Arg2->m.y.Mant = (long)(Arg2->m.y.Exp = 0);
-   Arg1--;
-   Arg2--;
-}
-
-void lStkNE(void) {
-   Arg2->l.x = (long)(Arg2->l.x != Arg1->l.x) << bitshift; /* JCO 12/26/94 */
-   Arg2->l.y = 0l;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkNE)(void) = dStkNE;
 
-void dStkOR(void) {
-   Arg2->d.x = (LDBL)(Arg2->d.x || Arg1->d.x);
+void dStkOR(void)
+{
+   Arg2->d.x = (double)(Arg2->d.x || Arg1->d.x);
    Arg2->d.y = 0.0;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-void mStkOR(void) {
-   Arg2->m.x = *fg2MP((long)(Arg2->m.x.Mant || Arg1->m.x.Mant), 0);
-   Arg2->m.y.Mant = (long)(Arg2->m.y.Exp = 0);
-   Arg1--;
-   Arg2--;
-}
-
-void lStkOR(void) {
-   Arg2->l.x = (long)(Arg2->l.x || Arg1->l.x) << bitshift; /* JCO 12/26/94 */
-   Arg2->l.y = 0l;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkOR)(void) = dStkOR;
 
-void dStkAND(void) {
-   Arg2->d.x = (LDBL)(Arg2->d.x && Arg1->d.x);
+void dStkAND(void)
+{
+   Arg2->d.x = (double)(Arg2->d.x && Arg1->d.x);
    Arg2->d.y = 0.0;
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-void mStkAND(void) {
-   Arg2->m.x = *fg2MP((long)(Arg2->m.x.Mant && Arg1->m.x.Mant), 0);
-   Arg2->m.y.Mant = (long)(Arg2->m.y.Exp = 0);
-   Arg1--;
-   Arg2--;
-}
-
-void lStkAND(void) {
-   Arg2->l.x = (long)(Arg2->l.x && Arg1->l.x) << bitshift; /* JCO 12/26/94 */
-   Arg2->l.y = 0l;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkAND)(void) = dStkAND;
-void dStkLog(void) {
+
+void dStkLog(void)
+{
    FPUcplxlog(&Arg1->d, &Arg1->d);
 }
-
-#ifndef XFRACT
-void mStkLog(void) {
-   mStkFunct(dStkLog);   /* call lStk via dStk */
-}
-
-void lStkLog(void) {
-   lStkFunct(dStkLog);
-}
-#endif
-
 void (*StkLog)(void) = dStkLog;
 
 void FPUcplxexp(_CMPLX *x, _CMPLX *z)
 {
-    LDBL e2x, siny, cosy;
+    double e2x, siny, cosy;
 
-    e2x = expl(x->x);
+    e2x = exp(x->x);
     FPUsincos(&x->y, &siny, &cosy);
     z->x = e2x * cosy;
     z->y = e2x * siny;
@@ -1745,69 +909,21 @@ void dStkExp(void)
 {
     FPUcplxexp(&Arg1->d, &Arg1->d);
 }
-
-#ifndef XFRACT
-void mStkExp(void) {
-   mStkFunct(dStkExp);   /* call lStk via dStk */
-}
-
-void lStkExp(void) {
-   lStkFunct(dStkExp);
-}
-#endif
-
 void (*StkExp)(void) = dStkExp;
 
-void dStkPwr(void) {
+void dStkPwr(void)
+{
    Arg2->d = ComplexPower(Arg2->d, Arg1->d);
    Arg1--;
    Arg2--;
 }
-
-#ifndef XFRACT
-#if (_MSC_VER >= 700)
-#pragma code_seg ("mpmath1_text")     /* place following in an overlay */
-#endif
-void mStkPwr(void) {
-   _CMPLX x, y;
-
-   x = MPC2cmplx(Arg2->m);
-   y = MPC2cmplx(Arg1->m);
-   x = ComplexPower(x, y);
-   Arg2->m = cmplx2MPC(x);
-   Arg1--;
-   Arg2--;
-}
-#if (_MSC_VER >= 700)
-#pragma code_seg ()       /* back to normal segment */
-#endif
-
-void lStkPwr(void) {
-   _CMPLX x, y;
-
-   x.x = (LDBL)Arg2->l.x / fg;
-   x.y = (LDBL)Arg2->l.y / fg;
-   y.x = (LDBL)Arg1->l.x / fg;
-   y.y = (LDBL)Arg1->l.y / fg;
-   x = ComplexPower(x, y);
-   if(fabsl(x.x) < fgLimit && fabsl(x.y) < fgLimit) {
-      Arg2->l.x = (long)(x.x * fg);
-      Arg2->l.y = (long)(x.y * fg);
-   }
-   else
-      overflow = 1;
-   Arg1--;
-   Arg2--;
-}
-#endif
-
 void (*StkPwr)(void) = dStkPwr;
 
-void EndInit(void) {
+void EndInit(void)
+{
    LastInitOp = OpPtr;
    InitJumpIndex = jump_index;
 }
-
 void (*PtrEndInit)(void) = EndInit;
 
 void StkJump (void)
@@ -1818,60 +934,22 @@ void StkJump (void)
    jump_index = jump_control[jump_index].DestJumpIndex;
 }
 
-void dStkJumpOnFalse (void)
+void dStkJumpOnFalse(void)
 {
    if(Arg1->d.x == 0)
       StkJump();
    else
       jump_index++;
 }
-
-void mStkJumpOnFalse (void)
-{
-#ifndef XFRACT
-   if(Arg1->m.x.Mant == 0)
-      StkJump();
-   else
-      jump_index++;
-#endif
-}
-
-void lStkJumpOnFalse (void)
-{
-   if(Arg1->l.x == 0)
-      StkJump();
-   else
-      jump_index++;
-}
-
 void (*StkJumpOnFalse)(void) = dStkJumpOnFalse;
 
-void dStkJumpOnTrue (void)
+void dStkJumpOnTrue(void)
 {
    if(Arg1->d.x)
       StkJump();
    else
       jump_index++;
 }
-
-void mStkJumpOnTrue (void)
-{
-#ifndef XFRACT
-   if(Arg1->m.x.Mant)
-      StkJump();
-   else
-      jump_index++;
-#endif
-}
-
-void lStkJumpOnTrue (void)
-{
-   if(Arg1->l.x)
-      StkJump();
-   else
-      jump_index++;
-}
-
 void (*StkJumpOnTrue)(void) = dStkJumpOnTrue;
 
 void StkJumpLabel (void)
@@ -1940,11 +1018,6 @@ struct ConstArg far *isconst(char *Str, int Len) {
                uses_p4 = 1;
             if(n == 18)        /* The formula uses 'p5'. */
                uses_p5 = 1;
-#ifndef XFRACT
-            if(n == 10 || n == 11 || n == 12)
-               if(MathType == L_MATH)
-                  keybuffer = 'f';
-#endif
             if(!isconst_pair(Str))
                return(&v[n]);
          }
@@ -1953,19 +1026,6 @@ struct ConstArg far *isconst(char *Str, int Len) {
    v[vsp].s = Str;
    v[vsp].len = Len;
    v[vsp].a.d.x = v[vsp].a.d.y = 0.0;
-
-#ifndef XFRACT
-   /* v[vsp].a should already be zeroed out */
-   switch(MathType) {
-   case M_MATH:
-      v[vsp].a.m.x.Mant = v[vsp].a.m.x.Exp = 0;
-      v[vsp].a.m.y.Mant = v[vsp].a.m.y.Exp = 0;
-      break;
-   case L_MATH:
-      v[vsp].a.l.x = v[vsp].a.l.y = 0;
-      break;
-   }
-#endif
 
    if(isdigit(Str[0])
        || (Str[0] == '-' && (isdigit(Str[1]) || Str[1] == '.'))
@@ -1992,19 +1052,11 @@ struct ConstArg far *isconst(char *Str, int Len) {
       else
          z.y = 0.0;
       z.x = atof(Str);
-      switch(MathType) {
+      switch(MathType)
+      {
       case D_MATH:
          v[vsp].a.d = z;
          break;
-#ifndef XFRACT
-      case M_MATH:
-         v[vsp].a.m = cmplx2MPC(z);
-         break;
-      case L_MATH:
-         v[vsp].a.l.x = (long)(z.x * fg);
-         v[vsp].a.l.y = (long)(z.y * fg);
-         break;
-#endif
       }
       v[vsp].s = Str;
    }
@@ -2046,8 +1098,8 @@ int isjump(char *Str, int Len)
    int i;
 
    for(i = 0; *JumpList[i]; i++)
-      if(far_strlen(JumpList[i]) == Len)
-         if(!far_strnicmp(JumpList[i], Str, Len))
+      if(_fstrlen(JumpList[i]) == Len)
+         if(!_fstrnicmp(JumpList[i], Str, Len))
             return i + 1;
    return 0;
 }
@@ -2152,8 +1204,8 @@ int Len;
    n = SkipWhiteSpace(&Str[Len]);
    if(Str[Len+n] == '(') {
       for(n = 0; n < sizeof(FnctList) / sizeof(struct FNCT_LIST); n++) {
-         if(far_strlen(FnctList[n].s) == Len) {        /* TIW 03-31-91 added far */
-            if(!far_strnicmp(FnctList[n].s, Str, Len)) {  /* TIW 03-31-91 added far */
+         if(_fstrlen(FnctList[n].s) == Len) {        /* TIW 03-31-91 added far */
+            if(!_fstrnicmp(FnctList[n].s, Str, Len)) {  /* TIW 03-31-91 added far */
                /* count function variables */
                if((functnum = whichfn(Str, Len)) != 0)    /* TIW 04-22-91 */
                   if(functnum > maxfn)                  /* TIW 04-22-91 */
@@ -2223,7 +1275,7 @@ static int ParseStr(char *Str, int pass) {
    struct ConstArg far *c;
    int ModFlag = 999, Len, Equals = 0, Mod[20], mdstk = 0;
    int jumptype;
-   LDBL const_pi, const_e;
+   double const_pi, const_e;
    double Xctr, Yctr, Xmagfactor, Rotation, Skew;
    long double Magnification;
    SetRandom = Randomized = 0;
@@ -2244,7 +1296,8 @@ static int ParseStr(char *Str, int pass) {
       stopmsg(0,ParseErrs(PE_INSUFFICIENT_MEM_FOR_TYPE_FORMULA));
       return(1);
    }
-   switch(MathType) {
+   switch(MathType)
+   {
    case D_MATH:
       StkAdd = dStkAdd;
       StkSub = dStkSub;
@@ -2300,121 +1353,6 @@ static int ParseStr(char *Str, int pass) {
       StkJumpOnFalse = dStkJumpOnFalse;    /* GGM 02-10-97 */
       StkOne = dStkOne;        /* GGM 10-08-97 */
       break;
-#ifndef XFRACT
-   case M_MATH:
-      StkAdd = mStkAdd;
-      StkSub = mStkSub;
-      StkNeg = mStkNeg;
-      StkMul = mStkMul;
-      StkSin = mStkSin;
-      StkSinh = mStkSinh;
-      StkLT = mStkLT;
-      StkLTE = mStkLTE;
-      StkMod = mStkMod;
-      StkSqr = mStkSqr;
-      StkCos = mStkCos;
-      StkCosh = mStkCosh;
-      StkLog = mStkLog;
-      StkExp = mStkExp;
-      StkPwr = mStkPwr;
-      StkDiv = mStkDiv;
-      StkAbs = mStkAbs;
-      StkReal = mStkReal;
-      StkImag = mStkImag;
-      StkConj = mStkConj;
-      StkTrig0 = mtrig0;  /* TIW 03-30-91 */
-      StkTrig1 = mtrig1;  /* TIW 03-30-91 */
-      StkTrig2 = mtrig2;  /* TIW 03-30-91 */
-      StkTrig3 = mtrig3;  /* TIW 03-30-91 */
-      StkFlip = mStkFlip;
-      StkTan  = mStkTan;  /* TIW 04-22-91 */
-      StkTanh  = mStkTanh;/* TIW 04-22-91 */
-      StkCoTan  = mStkCoTan;  /* TIW 04-24-91 */
-      StkCoTanh  = mStkCoTanh;/* TIW 04-24-91 */
-      StkCosXX = mStkCosXX;   /* PB  04-28-91 */
-      StkGT  = mStkGT;         /* MCP 11-3-91 */
-      StkGTE = mStkGTE;        /* MCP 11-3-91 */
-      StkEQ  = mStkEQ;         /* MCP 11-3-91 */
-      StkNE  = mStkNE;         /* MCP 11-3-91 */
-      StkAND = mStkAND;        /* MCP 11-3-91 */
-      StkOR  = mStkOR ;        /* MCP 11-3-91 */
-      StkSRand = mStkSRand;    /* MCP 11-21-91 */
-      StkASin = mStkASin;      /* TIW 11-25-94 */
-      StkACos = mStkACos;      /* TIW 11-25-94 */
-      StkACosh = mStkACosh;    /* TIW 11-25-94 */
-      StkATan = mStkATan;      /* TIW 11-25-94 */
-      StkATanh = mStkATanh;    /* TIW 11-25-94 */
-      StkCAbs = mStkCAbs;      /* TIW 11-25-94 */
-      StkSqrt = mStkSqrt;      /* TIW 11-25-94 */
-      StkZero = mStkZero;      /* JCO 12-31-94 */
-      StkFloor = mStkFloor;    /* TIW 06-30-96 */
-      StkCeil = mStkCeil;      /* TIW 06-30-96 */
-      StkTrunc = mStkTrunc;    /* TIW 06-30-96 */
-      StkRound = mStkRound;    /* TIW 06-30-96 */
-      StkJumpOnTrue  = mStkJumpOnTrue;     /* GGM 02-10-97 */
-      StkJumpOnFalse = mStkJumpOnFalse;    /* GGM 02-10-97 */
-      StkOne = mStkOne;        /* GGM 10-08-97 */
-      break;
-   case L_MATH:
-      Delta16 = bitshift - 16;
-      ShiftBack = 32 - bitshift; /* TW 06-18-90 */
-      StkAdd = lStkAdd;
-      StkSub = lStkSub;
-      StkNeg = lStkNeg;
-      StkMul = lStkMul;
-      StkSin = lStkSin;
-      StkSinh = lStkSinh;
-      StkLT = lStkLT;
-      StkLTE = lStkLTE;
-    if (save_release > 1826)
-   StkMod = lStkMod;
-    else
-   StkMod = lStkModOld;
-      StkSqr = lStkSqr;
-      StkCos = lStkCos;
-      StkCosh = lStkCosh;
-      StkLog = lStkLog;
-      StkExp = lStkExp;
-      StkPwr = lStkPwr;
-      StkDiv = lStkDiv;
-      StkAbs = lStkAbs;
-      StkReal = lStkReal;
-      StkImag = lStkImag;
-      StkConj = lStkConj;
-      StkTrig0 = ltrig0;   /* TIW 03-30-91 */
-      StkTrig1 = ltrig1;   /* TIW 03-30-91 */
-      StkTrig2 = ltrig2;   /* TIW 03-30-91 */
-      StkTrig3 = ltrig3;   /* TIW 03-30-91 */
-      StkFlip = lStkFlip;
-      StkTan  = lStkTan;   /* TIW 04-22-91 */
-      StkTanh  = lStkTanh; /* TIW 04-22-91 */
-      StkCoTan  = lStkCoTan;   /* TIW 04-24-91 */
-      StkCoTanh  = lStkCoTanh; /* TIW 04-24-91 */
-      StkCosXX = lStkCosXX;    /* PB  04-28-91 */
-      StkGT  = lStkGT;         /* MCP 11-3-91 */
-      StkGTE = lStkGTE;        /* MCP 11-3-91 */
-      StkEQ  = lStkEQ;         /* MCP 11-3-91 */
-      StkNE  = lStkNE;         /* MCP 11-3-91 */
-      StkAND = lStkAND;        /* MCP 11-3-91 */
-      StkOR  = lStkOR ;        /* MCP 11-3-91 */
-      StkSRand = lStkSRand;    /* MCP 11-21-91 */
-      StkASin = lStkASin;      /* TIW 11-25-94 */
-      StkACos = lStkACos;      /* TIW 11-25-94 */
-      StkACosh = lStkACosh;    /* TIW 11-25-94 */
-      StkATan = lStkATan;      /* TIW 11-25-94 */
-      StkATanh = lStkATanh;    /* TIW 11-25-94 */
-      StkCAbs = lStkCAbs;      /* TIW 11-25-94 */
-      StkSqrt = lStkSqrt;      /* TIW 11-25-94 */
-      StkZero = lStkZero;      /* JCO 12-31-94 */
-      StkFloor = lStkFloor;    /* TIW 06-30-96 */
-      StkCeil = lStkCeil;      /* TIW 06-30-96 */
-      StkTrunc = lStkTrunc;    /* TIW 06-30-96 */
-      StkRound = lStkRound;    /* TIW 06-30-96 */
-      StkJumpOnTrue  = lStkJumpOnTrue;     /* GGM 02-10-97 */
-      StkJumpOnFalse = lStkJumpOnFalse;    /* GGM 02-10-97 */
-      StkOne = lStkOne;        /* GGM 10-08-97 */
-      break;
-#endif
    }
    maxfn = 0;   /* TIW 03-30-91 */
    for(vsp = 0; vsp < sizeof(Constants) / sizeof(char*); vsp++) {
@@ -2422,23 +1360,24 @@ static int ParseStr(char *Str, int pass) {
       v[vsp].len = strlen(Constants[vsp]);
    }
    cvtcentermag(&Xctr, &Yctr, &Magnification, &Xmagfactor, &Rotation, &Skew);
-   const_pi = atanl(1.0) * 4.0;
-   const_e  = expl(1.0);
+   const_pi = atan(1.0) * 4.0;
+   const_e  = exp(1.0);
    v[7].a.d.x = v[7].a.d.y = 0.0;
-   v[11].a.d.x = (LDBL)xdots;
-   v[11].a.d.y = (LDBL)ydots;
-   v[12].a.d.x = (LDBL)maxit;
+   v[11].a.d.x = (double)xdots;
+   v[11].a.d.y = (double)ydots;
+   v[12].a.d.x = (double)maxit;
    v[12].a.d.y = 0.0;
-   v[13].a.d.x = (LDBL)ismand;
+   v[13].a.d.x = (double)ismand;
    v[13].a.d.y = 0.0;
    v[14].a.d.x = Xctr;
    v[14].a.d.y = Yctr;
-   v[15].a.d.x = (LDBL)Magnification;
+   v[15].a.d.x = (double)Magnification;
    v[15].a.d.y = Xmagfactor;
    v[16].a.d.x = Rotation;
    v[16].a.d.y = Skew;
 
-   switch(MathType) {
+   switch(MathType)
+   {
    case D_MATH:
       v[1].a.d.x = param[0];
       v[1].a.d.y = param[1];
@@ -2455,58 +1394,6 @@ static int ParseStr(char *Str, int pass) {
       v[18].a.d.x = param[8];
       v[18].a.d.y = param[9];
       break;
-#ifndef XFRACT
-   case M_MATH:
-      v[1].a.m.x = *d2MP(param[0]);
-      v[1].a.m.y = *d2MP(param[1]);
-      v[2].a.m.x = *d2MP(param[2]);
-      v[2].a.m.y = *d2MP(param[3]);
-      v[5].a.m.x = *d2MP(const_pi);
-      v[5].a.m.y = *d2MP(0.0);
-      v[6].a.m.x = *d2MP(const_e);
-      v[6].a.m.y = *d2MP(0.0);
-      v[8].a.m.x = *d2MP(param[4]);
-      v[8].a.m.y = *d2MP(param[5]);
-      v[11].a.m  = cmplx2MPC(v[11].a.d);
-      v[12].a.m  = cmplx2MPC(v[12].a.d);
-      v[13].a.m  = cmplx2MPC(v[13].a.d);
-      v[14].a.m  = cmplx2MPC(v[14].a.d);
-      v[15].a.m  = cmplx2MPC(v[15].a.d);
-      v[16].a.m  = cmplx2MPC(v[16].a.d);
-      v[17].a.m.x = *d2MP(param[6]);
-      v[17].a.m.y = *d2MP(param[7]);
-      v[18].a.m.x = *d2MP(param[8]);
-      v[18].a.m.y = *d2MP(param[9]);
-      break;
-   case L_MATH:
-      v[1].a.l.x = (long)(param[0] * fg);
-      v[1].a.l.y = (long)(param[1] * fg);
-      v[2].a.l.x = (long)(param[2] * fg);
-      v[2].a.l.y = (long)(param[3] * fg);
-      v[5].a.l.x = (long)(const_pi * fg);
-      v[5].a.l.y = 0L;
-      v[6].a.l.x = (long)(const_e * fg);
-      v[6].a.l.y = 0L;
-      v[8].a.l.x = (long)(param[4] * fg);
-      v[8].a.l.y = (long)(param[5] * fg);
-      v[11].a.l.x = xdots; v[11].a.l.x <<= bitshift;
-      v[11].a.l.y = ydots; v[11].a.l.y <<= bitshift;
-      v[12].a.l.x = maxit; v[12].a.l.x <<= bitshift;
-      v[12].a.l.y = 0L;
-      v[13].a.l.x = ismand; v[13].a.l.x <<= bitshift;
-      v[13].a.l.y = 0L;
-      v[14].a.l.x = (long)(v[14].a.d.x * fg);
-      v[14].a.l.y = (long)(v[14].a.d.y * fg);
-      v[15].a.l.x = (long)(v[15].a.d.x * fg);
-      v[15].a.l.y = (long)(v[15].a.d.y * fg);
-      v[16].a.l.x = (long)(v[16].a.d.x * fg);
-      v[16].a.l.y = (long)(v[16].a.d.y * fg);
-      v[17].a.l.x = (long)(param[6] * fg);
-      v[17].a.l.y = (long)(param[7] * fg);
-      v[18].a.l.x = (long)(param[8] * fg);
-      v[18].a.l.y = (long)(param[9] * fg);
-      break;
-#endif
    }
 
    LastInitOp = paren = OpPtr = LodPtr = StoPtr = posp = 0;
@@ -2745,13 +1632,6 @@ int Formula(void) {
       case D_MATH:
          dRandom();
          break;
-#ifndef XFRACT
-      case L_MATH:
-         lRandom();
-         break;
-      case M_MATH:
-         mRandom();
-#endif
       }
    }
 
@@ -2760,28 +1640,13 @@ int Formula(void) {
    while(OpPtr < (int)LastOp) {
       f[OpPtr]();
       OpPtr++;
-#ifdef WATCH_MP
-      x1 = *MP2d(Arg1->m.x);
-      y1 = *MP2d(Arg1->m.y);
-      x2 = *MP2d(Arg2->m.x);
-      y2 = *MP2d(Arg2->m.y);
-#endif
    }
 
-   switch(MathType) {
+   switch(MathType)
+   {
    case D_MATH:
       old = new = v[3].a.d;
       return(Arg1->d.x == 0.0);
-#ifndef XFRACT
-   case M_MATH:
-      old = new = MPC2cmplx(v[3].a.m);
-      return(Arg1->m.x.Exp == 0 && Arg1->m.x.Mant == 0);
-   case L_MATH:
-      lold = lnew = v[3].a.l;
-      if(overflow)
-         return(1);
-      return(Arg1->l.x == 0L);
-#endif
    }
    return(1);
 }
@@ -2794,10 +1659,11 @@ int form_per_pixel(void) {
    Arg2--;
 
 
-   v[10].a.d.x = (LDBL)col;
-   v[10].a.d.y = (LDBL)row;
+   v[10].a.d.x = (double)col;
+   v[10].a.d.y = (double)row;
 
-   switch(MathType) {
+   switch(MathType)
+   {
    case D_MATH:
       if((row+col)&1)
          v[9].a.d.x = 1.0;
@@ -2805,25 +1671,6 @@ int form_per_pixel(void) {
          v[9].a.d.x = 0.0;
       v[9].a.d.y = 0.0;
       break;
-
-
-#ifndef XFRACT
-   case M_MATH:
-      if((row+col)&1)
-         v[9].a.m = MPCone;
-      else {
-         v[9].a.m.x.Mant = v[9].a.m.x.Exp = 0;
-         v[9].a.m.y.Mant = v[9].a.m.y.Exp = 0;
-      }
-      v[10].a.m = cmplx2MPC(v[10].a.d);
-      break;
-   case L_MATH:
-      v[9].a.l.x = (long) (((row+col)&1) * fg);
-      v[9].a.l.y = 0L;
-      v[10].a.l.x = col;   v[10].a.l.x <<= bitshift;
-      v[10].a.l.y = row;   v[10].a.l.y <<= bitshift;
-      break;
-#endif
    }
 
    /* TW started additions for inversion support here 4/17/94 */
@@ -2837,23 +1684,6 @@ int form_per_pixel(void) {
             v[0].a.d.x = old.x;
             v[0].a.d.y = old.y;
             break;
-#ifndef XFRACT
-         case M_MATH:
-            v[0].a.m.x = *d2MP(old.x);
-            v[0].a.m.y = *d2MP(old.y);
-            break;
-         case L_MATH:
-            /* watch out for overflow */
-            if(sqr(old.x)+sqr(old.y) >= 127)
-            {
-               old.x = 8;  /* value to bail out in one iteration */
-               old.y = 8;
-            }
-            /* convert to fudged longs */
-            v[0].a.l.x = (long)(old.x*fg);
-            v[0].a.l.y = (long)(old.y*fg);
-            break;
-#endif
          }
       }
       else
@@ -2864,16 +1694,6 @@ int form_per_pixel(void) {
             v[0].a.d.x = dxpixel();
             v[0].a.d.y = dypixel();
             break;
-#ifndef XFRACT
-         case M_MATH:
-            v[0].a.m.x = *d2MP(dxpixel());
-            v[0].a.m.y = *d2MP(dypixel());
-            break;
-         case L_MATH:
-            v[0].a.l.x = lxpixel();
-            v[0].a.l.y = lypixel();
-            break;
-#endif
          }
    }
 
@@ -2887,18 +1707,11 @@ int form_per_pixel(void) {
    InitStoPtr = StoPtr;
    InitOpPtr = OpPtr;
    /* Set old variable for orbits TIW 12-18-93 */
-   switch(MathType) {
+   switch(MathType)
+   {
    case D_MATH:
       old = v[3].a.d;
       break;
-#ifndef XFRACT
-   case M_MATH:
-      old = MPC2cmplx(v[3].a.m);
-      break;
-   case L_MATH:
-      lold = v[3].a.l;
-      break;
-#endif
    }
 
    if(overflow)
@@ -3045,7 +1858,7 @@ void getfuncinfo(struct token_st * tok)
 {
    int i;
    for(i=0; i < sizeof(FnctList)/ sizeof(struct FNCT_LIST); i++) {
-      if(!far_strcmp(FnctList[i].s, tok->token_str)) {
+      if(!_fstrcmp(FnctList[i].s, tok->token_str)) {
          tok->token_id = i;
          if(i >= 11 && i <= 14)
             tok->token_type = PARAM_FUNCTION;
@@ -3056,7 +1869,7 @@ void getfuncinfo(struct token_st * tok)
    }
 
    for (i=0; i < 4; i++) { /*pick up flow control*/
-      if(!far_strcmp(JumpList[i], tok->token_str)) {
+      if(!_fstrcmp(JumpList[i], tok->token_str)) {
          tok->token_type = FLOW_CONTROL;
          tok->token_id   = i + 1;
          return;
@@ -3072,7 +1885,7 @@ void getvarinfo(struct token_st * tok)
    int i;
 
    for(i=0; i < sizeof(Constants) / sizeof(char*); i++) {
-      if(!far_strcmp(Constants[i], tok->token_str)) {
+      if(!_fstrcmp(Constants[i], tok->token_str)) {
          tok->token_id = i;
          switch(i) {
             case 1: case 2: case 8: case 13: case 17: case 18:
@@ -3465,7 +2278,7 @@ int frmgettoken(FILE * openfile, struct token_st * this_token)
          this_token->token_str[i] = (char) 0;
          if(this_token->token_type == OPERATOR) {
             for(i=0; i < sizeof(OPList)/sizeof(struct OP_LIST); i++) {
-               if(!far_strcmp(OPList[i].s, this_token->token_str)) {
+               if(!_fstrcmp(OPList[i].s, this_token->token_str)) {
                   this_token->token_id = i;
                }
             }
@@ -3592,9 +2405,9 @@ int frm_check_name_and_sym (FILE * open_file, int from_prompts1c)
 
    if(i > ITEMNAMELEN) {
       int j;
-      int k = far_strlen(ParseErrs(PE_FORMULA_NAME_TOO_LARGE));
+      int k = _fstrlen(ParseErrs(PE_FORMULA_NAME_TOO_LARGE));
       char msgbuf[100];
-      far_strcpy(msgbuf, ParseErrs(PE_FORMULA_NAME_TOO_LARGE));
+      _fstrcpy(msgbuf, ParseErrs(PE_FORMULA_NAME_TOO_LARGE));
       strcat(msgbuf, ":\n   ");
       fseek(open_file, filepos, SEEK_SET);
       for(j = 0; j < i && j < 25; j++)
@@ -3640,11 +2453,11 @@ int frm_check_name_and_sym (FILE * open_file, int from_prompts1c)
          }
       }
       if(SymStr[i].s[0] == (char) 0 && from_prompts1c) {
-         char far * msgbuf = (char far*) farmemalloc(far_strlen(ParseErrs(PE_INVALID_SYM_USING_NOSYM))
+         char far * msgbuf = (char far*) farmemalloc(_fstrlen(ParseErrs(PE_INVALID_SYM_USING_NOSYM))
                             + strlen(sym_buf) + 6);
-         far_strcpy(msgbuf, ParseErrs(PE_INVALID_SYM_USING_NOSYM));
-         far_strcat(msgbuf, ":\n   ");
-         far_strcat(msgbuf, sym_buf);
+         _fstrcpy(msgbuf, ParseErrs(PE_INVALID_SYM_USING_NOSYM));
+         _fstrcat(msgbuf, ":\n   ");
+         _fstrcat(msgbuf, sym_buf);
          stopmsg(8, msgbuf);
          farmemfree(msgbuf);
       }
@@ -3871,22 +2684,8 @@ int fpFormulaSetup(void)
    return RunFormRes;
 }
 
-int intFormulaSetup(void) {
-#ifdef XFRACT
-      printf("intFormulaSetup called!!!\n");
-      exit(-1);
-#else
-      MathType = L_MATH;
-      fg = (double)(1L << bitshift);
-      fgLimit = (double)0x7fffffffL / fg;
-      ShiftBack = 32 - bitshift;
-#endif
-      return(!RunForm(FormName, 0));
-   }
-
-
 /* TIW added 06-20-90 so functions can be called from fractals.c */
-void init_misc()
+void init_misc(void)
 {
    static struct ConstArg far vv[5];
    static union Arg argfirst,argsecond;
@@ -4010,10 +2809,7 @@ void free_workarea()
    /* total_formula_mem = 0; Leave this set so value can display on secret TAB screen */
 
    /* restore extraseg */
-   if(integerfractal && !invert)
-      fill_lx_array();
-   else
-      fill_dx_array();
+   fill_dx_array();
 }
 
 
@@ -4200,10 +2996,10 @@ struct var_list_st far * add_var_to_list (struct var_list_st far * p, struct tok
    if (p == NULL) {
       if ((p = var_list_alloc()) == NULL)
          return NULL;
-      far_strcpy(p->name, tok.token_str);
+      _fstrcpy(p->name, tok.token_str);
       p->next_item = NULL;
    }
-   else if (far_strcmp(p->name, tok.token_str) == 0) {
+   else if (_fstrcmp(p->name, tok.token_str) == 0) {
    }
    else {
       if ((p->next_item = add_var_to_list(p->next_item, tok)) == NULL)

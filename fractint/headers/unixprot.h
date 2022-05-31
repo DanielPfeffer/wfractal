@@ -9,6 +9,9 @@ extern long  cdecl calcmandfpasm_c(void);
 extern long  cdecl calcmandfpasm_p5(void);
 extern void cdecl calcmandfpasmstart_p5(void);
 
+#define _fmemset memset
+#define _fmemcpy memcpy
+#define _fmemcmp memcmp
 
 /*
  *   general.c -- C file prototypes
@@ -35,15 +38,6 @@ extern void erasesegment(int, int);
 extern int  farread(int, void *, unsigned int);
 extern int  farwrite(int, void *, unsigned int);
 extern long normalize(char *);
-extern int  far_strlen (char *);
-extern void far_strcpy (char *, char *);
-extern int  far_strcmp (char *, char *);
-extern int  far_strnicmp (char *, char *, int);
-extern void far_strcat (char *, char *);
-extern void far_memset(VOIDFARPTR, int, unsigned int);
-extern void far_memcpy(VOIDFARPTR, VOIDFARPTR, int);
-extern int  far_memcmp(VOIDFARPTR, VOIDFARPTR, int);
-extern int  far_memicmp(VOIDFARPTR, VOIDFARPTR, int);
 extern void decode_evolver_info(struct evolution_info *, int);
 extern void fix_ranges(int *, int, int);
 extern void decode_fractal_info(struct fractal_info *, int);

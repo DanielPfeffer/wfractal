@@ -8,17 +8,14 @@
 ;	divide()
 ;
 
-.MODEL	medium,c
+                .model          large, C
 
 ; I don't know why this has to be here, but BC++ won't create public
 ; symbols without it.
 
-public multiply, divide, toextra, fromextra, cmpextra
+                public          multiply, divide
 
-
-.8086
-
-.DATA
+                .data
 
 
 ; ************************ Public variables *****************************
@@ -448,63 +445,5 @@ dividereturn:				; that's all, folks!
 	pop	di
 	ret
 divide		endp
-
-.8086
-
-.DATA
-
-extrn temp_array:DWORD
-
-.CODE
-
-; *************** Function toextra(tooffset,fromaddr, fromcount) *********
-
-toextra proc	uses es di si, tooffset:word, fromaddr:word, fromcount:word
-        cld                             ; move forward
-        les     di, temp_array
-        add     di,tooffset             ; load to here
-	mov	si,fromaddr		; load from here
-	mov	cx,fromcount		; this many bytes
-	rep	movsb			; do it.
-tobad:
-	ret				; we done.
-toextra endp
-
-
-; *************** Function fromextra(fromoffset, toaddr, tocount) *********
-
-fromextra proc	uses es di si, fromoffset:word, toaddr:word, tocount:word
-	push	ds			; save DS for a tad
-	pop	es			; restore it to ES
-	cld				; move forward
-	mov	di,toaddr		; load to here
-        mov     cx,tocount              ; this many bytes
-        lds     si, temp_array
-        add     si,fromoffset           ;  ..
-	rep	movsb			; do it.
-frombad:
-	push	es			; save ES again.
-	pop	ds			; restore DS
-	ret				; we done.
-fromextra endp
-
-
-; *************** Function cmpextra(cmpoffset,cmpaddr, cmpcount) *********
-
-cmpextra proc	uses es di si, cmpoffset:word, cmpaddr:word, cmpcount:word
-        cld                             ; move forward
-        les     di, temp_array
-        add     di,cmpoffset            ; load to here
-	mov	si,cmpaddr		; load from here
-	mov	cx,cmpcount		; this many bytes
-	rep	cmpsb			; do it.
-	jnz	cmpbad			; failed.
-	mov	ax,0			; 0 == true
-	jmp	cmpend
-cmpbad:
-	mov	ax,1			; 1 == false
-cmpend:
-	ret				; we done.
-cmpextra	endp
 
 	end

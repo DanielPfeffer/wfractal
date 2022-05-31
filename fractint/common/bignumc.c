@@ -842,13 +842,13 @@ bn_t div_a_bn_int(bn_t r, U16 u)
 /*********************************************************************/
 /*  f = b                                                            */
 /*  Converts a bignumber to a double                                 */
-LDBL bntofloat(bn_t n)
+double bntofloat(bn_t n)
     {
     int i;
     int signflag=0;
     int expon;
     bn_t getbyte;
-    LDBL f=0;
+    double f=0;
 
     if (is_bn_neg(n))
         {
@@ -865,7 +865,7 @@ LDBL bntofloat(bn_t n)
       }
 
     /* There is no need to use all bnlength bytes.  To get the full */
-    /* precision of LDBL, all you need is LDBL_MANT_DIG/8+1.        */
+    /* precision of double, all you need is LDBL_MANT_DIG/8+1.        */
     for (i = 0; i < (LDBL_MANT_DIG/8+1) && getbyte >= n; i++, getbyte--)
         {
         f += scale_256(*getbyte,-i);
@@ -903,7 +903,7 @@ bf_t copy_bf(bf_t r, bf_t n)
 /*********************************************************************/
 /*  b = f                                                            */
 /*  Converts a double to a bigfloat                                  */
-bf_t floattobf(bf_t r, LDBL f)
+bf_t floattobf(bf_t r, double f)
     {
     int power;
     int bnl, il;
@@ -932,7 +932,7 @@ bf_t floattobf(bf_t r, LDBL f)
 /*********************************************************************/
 /*  b = f                                                            */
 /*  Converts a double to a bigfloat                                  */
-bf_t floattobf1(bf_t r, LDBL f)
+bf_t floattobf1(bf_t r, double f)
     {
     char msg[80];
 #ifdef USE_LONG_DOUBLE
@@ -947,11 +947,11 @@ bf_t floattobf1(bf_t r, LDBL f)
 /*********************************************************************/
 /*  f = b                                                            */
 /*  Converts a bigfloat to a double                                 */
-LDBL bftofloat(bf_t n)
+double bftofloat(bf_t n)
     {
     int power;
     int bnl, il;
-    LDBL f;
+    double f;
 
     bnl = bnlength;
     bnlength = bflength;
@@ -971,7 +971,7 @@ LDBL bftofloat(bf_t n)
 /* extracts the mantissa and exponent of f                          */
 /* finds m and n such that 1<=|m|<256 and f = m*256^n               */
 /* n is stored in *exp_ptr and m is returned, sort of like frexp()  */
-LDBL extract_256(LDBL f, int *exp_ptr)
+double extract_256(double f, int *exp_ptr)
    {
    return extract_value(f, 256, exp_ptr);
    }
@@ -982,7 +982,7 @@ LDBL extract_256(LDBL f, int *exp_ptr)
 /*                                                                  */
 /* n must be in the range -2^12 <= n < 2^12 (2^12=4096),            */
 /* which should not be a problem                                    */
-LDBL scale_256( LDBL f, int n )
+double scale_256( double f, int n )
    {
    return scale_value( f, 256, n );
    }

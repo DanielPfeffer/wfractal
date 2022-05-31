@@ -166,7 +166,7 @@ int strlen_needed_bf()
 
 char *unsafe_bftostr(char *s, int dec, bf_t r)
     {
-    LDBL value;
+    double value;
     int power;
 
     value = bftofloat(r);
@@ -191,7 +191,7 @@ char *unsafe_bftostr(char *s, int dec, bf_t r)
 /* the e version puts it in scientific notation, (like printf's %e) */
 char *unsafe_bftostr_e(char *s, int dec, bf_t r)
     {
-    LDBL value;
+    double value;
 
     value = bftofloat(r);
     if (value == 0.0)
@@ -210,7 +210,7 @@ char *unsafe_bftostr_e(char *s, int dec, bf_t r)
 /* the f version puts it in decimal notation, (like printf's %f) */
 char *unsafe_bftostr_f(char *s, int dec, bf_t r)
     {
-    LDBL value;
+    double value;
 
     value = bftofloat(r);
     if (value == 0.0)
@@ -347,7 +347,7 @@ bf_t unsafe_inv_bf(bf_t r, bf_t n)
     {
     int signflag=0, i;
     int fexp, rexp;
-    LDBL f;
+    double f;
     bf_t orig_r, orig_n; /* orig_bftmp1 not needed here */
     int  orig_bflength,
          orig_bnlength,
@@ -365,7 +365,7 @@ bf_t unsafe_inv_bf(bf_t r, bf_t n)
         }
 
     fexp = (S16)big_access16(n+bflength);
-    big_set16(n+bflength, (S16)0); /* put within LDBL range */
+    big_set16(n+bflength, (S16)0); /* put within double range */
 
     f = bftofloat(n);
     if (f == 0) /* division by zero */
@@ -456,12 +456,12 @@ bf_t unsafe_inv_bf(bf_t r, bf_t n)
 bf_t unsafe_div_bf(bf_t r, bf_t n1, bf_t n2)
     {
     int aexp, bexp, rexp;
-    LDBL a, b;
+    double a, b;
 
     /* first, check for valid data */
 
     aexp = (S16)big_access16(n1+bflength);
-    big_set16(n1+bflength, (S16)0); /* put within LDBL range */
+    big_set16(n1+bflength, (S16)0); /* put within double range */
 
     a = bftofloat(n1);
     if (a == 0) /* division into zero */
@@ -471,7 +471,7 @@ bf_t unsafe_div_bf(bf_t r, bf_t n1, bf_t n2)
         }
 
     bexp = (S16)big_access16(n2+bflength);
-    big_set16(n2+bflength, (S16)0); /* put within LDBL range */
+    big_set16(n2+bflength, (S16)0); /* put within double range */
 
     b = bftofloat(n2);
     if (b == 0) /* division by zero */
@@ -499,7 +499,7 @@ bf_t unsafe_div_bf(bf_t r, bf_t n1, bf_t n2)
 bf_t unsafe_sqrt_bf(bf_t r, bf_t n)
     {
     int i, comp, almost_match=0;
-    LDBL f;
+    double f;
     bf_t orig_r, orig_n;
     int  orig_bflength,
          orig_bnlength,
@@ -522,7 +522,7 @@ bf_t unsafe_sqrt_bf(bf_t r, bf_t n)
         clear_bf(r); /* sqrt(0) = 0 */
         return r;
         }
-    f = sqrtl(f); /* approximate square root */
+    f = sqrt(f); /* approximate square root */
     /* no need to check overflow */
 
     /* With Newton's Method, there is no need to calculate all the digits */
@@ -628,7 +628,7 @@ bf_t exp_bf(bf_t r, bf_t n)
 bf_t unsafe_ln_bf(bf_t r, bf_t n)
     {
     int i, comp, almost_match=0;
-    LDBL f;
+    double f;
     bf_t orig_r, orig_n, orig_bftmp5;
     int  orig_bflength,
          orig_bnlength,
@@ -647,7 +647,7 @@ bf_t unsafe_ln_bf(bf_t r, bf_t n)
         }
 
     f = bftofloat(n);
-    f = logl(f); /* approximate ln(x) */
+    f = log(f); /* approximate ln(x) */
     /* no need to check overflow */
     /* appears to be ok, do ln */
 
@@ -891,7 +891,7 @@ bf_t unsafe_sincos_bf(bf_t s, bf_t c, bf_t n)
 bf_t unsafe_atan_bf(bf_t r, bf_t n)
     {
     int i, comp, almost_match=0, signflag=0;
-    LDBL f;
+    double f;
     bf_t orig_r, orig_n, orig_bf_pi, orig_bftmp3;
     int  orig_bflength,
          orig_bnlength,
@@ -910,7 +910,7 @@ bf_t unsafe_atan_bf(bf_t r, bf_t n)
         neg_a_bf(n);
         }
 
-/* If n is very large, atanl() won't give enough decimal places to be a */
+/* If n is very large, atan() won't give enough decimal places to be a */
 /* good enough initial guess for Newton's Method.  If it is larger than */
 /* say, 1, atan(n) = pi/2 - acot(n) = pi/2 - atan(1/n).                 */
 
@@ -951,7 +951,7 @@ bf_t unsafe_atan_bf(bf_t r, bf_t n)
     bf_pi = orig_bf_pi + orig_bflength - bflength;
     bftmp3 = orig_bftmp3 + orig_bflength - bflength;
 
-    f = atanl(f); /* approximate arctangent */
+    f = atan(f); /* approximate arctangent */
     /* no need to check overflow */
 
     floattobf(r, f); /* start with approximate atan */
@@ -1966,11 +1966,11 @@ bf_t div_a_bf_int(bf_t r, U16 u)
 /* extracts the mantissa and exponent of f                          */
 /* finds m and n such that 1<=|m|<b and f = m*b^n                   */
 /* n is stored in *exp_ptr and m is returned, sort of like frexp()  */
-LDBL extract_value(LDBL f, LDBL b, int *exp_ptr)
+double extract_value(double f, double b, int *exp_ptr)
    {
    int n;
-   LDBL af, ff, orig_b;
-   LDBL value[15];
+   double af, ff, orig_b;
+   double value[15];
    unsigned powertwo;
 
    if (b <= 0 || f == 0)
@@ -2016,9 +2016,9 @@ LDBL extract_value(LDBL f, LDBL b, int *exp_ptr)
 /********************************************************************/
 /* calculates and returns the value of f*b^n                        */
 /* sort of like ldexp()                                             */
-LDBL scale_value( LDBL f, LDBL b , int n )
+double scale_value( double f, double b , int n )
    {
-   LDBL total=1;
+   double total=1;
    int an;
 
    if (b == 0 || f == 0)
@@ -2048,7 +2048,7 @@ LDBL scale_value( LDBL f, LDBL b , int n )
 /* extracts the mantissa and exponent of f                          */
 /* finds m and n such that 1<=|m|<10 and f = m*10^n                 */
 /* n is stored in *exp_ptr and m is returned, sort of like frexp()  */
-LDBL extract_10(LDBL f, int *exp_ptr)
+double extract_10(double f, int *exp_ptr)
    {
    return extract_value(f, 10, exp_ptr);
    }
@@ -2056,7 +2056,7 @@ LDBL extract_10(LDBL f, int *exp_ptr)
 /********************************************************************/
 /* calculates and returns the value of f*10^n                       */
 /* sort of like ldexp()                                             */
-LDBL scale_10( LDBL f, int n )
+double scale_10( double f, int n )
    {
    return scale_value( f, 10, n );
    }

@@ -2,9 +2,12 @@
         loadfile.c - load an existing fractal image, control level
 */
 
+#include <errno.h>
 #include <string.h>
 #include <time.h>
-#include <errno.h>
+
+#include <mem.h>
+
   /* see Fractint.c for a description of the "include"  hierarchy */
 #include "port.h"
 #include "prototyp.h"
@@ -298,8 +301,8 @@ int read_overlay()      /* read overlay/3D files, if reqr'd */
    if (read_info.version > 12) { /* post-version 19.60 */
       quick_calc   = read_info.quick_calc;
       closeprox    = read_info.closeprox;
-      if (fractype == FPPOPCORN || fractype == LPOPCORN ||
-          fractype == FPPOPCORNJUL || fractype == LPOPCORNJUL ||
+      if (fractype == FPPOPCORN ||
+          fractype == FPPOPCORNJUL ||
           fractype == LATOO)
             functionpreloaded = 1;
    }
@@ -432,7 +435,7 @@ int read_overlay()      /* read overlay/3D files, if reqr'd */
           {
           bf_math = 1;
           init_bf_length(read_info.bflength);
-          far_memcpy((char far *)bfxmin,blk_5_info.apm_data,blk_5_info.length);
+          _fmemcpy(bfxmin, blk_5_info.apm_data, blk_5_info.length);
           farmemfree(blk_5_info.apm_data);
           }
    else
@@ -901,43 +904,43 @@ static void backwardscompat(struct fractal_info *info)
          trigndx[0] = COSH;
          break;
       case LMANDELSINE  :
-         fractype = MANDELTRIG;
+         fractype = MANDELTRIGFP;
          trigndx[0] = SIN;
          break;
       case LLAMBDASINE  :
-         fractype = LAMBDATRIG;
+         fractype = LAMBDATRIGFP;
          trigndx[0] = SIN;
          break;
       case LMANDELCOS   :
-         fractype = MANDELTRIG;
+         fractype = MANDELTRIGFP;
          trigndx[0] = COS;
          break;
       case LLAMBDACOS   :
-         fractype = LAMBDATRIG;
+         fractype = LAMBDATRIGFP;
          trigndx[0] = COS;
          break;
       case LMANDELSINH  :
-         fractype = MANDELTRIG;
+         fractype = MANDELTRIGFP;
          trigndx[0] = SINH;
          break;
       case LLAMBDASINH  :
-         fractype = LAMBDATRIG;
+         fractype = LAMBDATRIGFP;
          trigndx[0] = SINH;
          break;
       case LMANDELCOSH  :
-         fractype = MANDELTRIG;
+         fractype = MANDELTRIGFP;
          trigndx[0] = COSH;
          break;
       case LLAMBDACOSH  :
-         fractype = LAMBDATRIG;
+         fractype = LAMBDATRIGFP;
          trigndx[0] = COSH;
          break;
       case LMANDELEXP   :
-         fractype = MANDELTRIG;
+         fractype = MANDELTRIGFP;
          trigndx[0] = EXP;
          break;
       case LLAMBDAEXP   :
-         fractype = LAMBDATRIG;
+         fractype = LAMBDATRIGFP;
          trigndx[0] = EXP;
          break;
       case DEMM         :
@@ -948,7 +951,7 @@ static void backwardscompat(struct fractal_info *info)
          fractype = JULIAFP;
          usr_distest = (info->ydots - 1) * 2;
          break;
-      case MANDELLAMBDA :
+      case MANDELLAMBDAFP:
          useinitorbit = 2;
          break;
       }
@@ -963,18 +966,13 @@ void set_if_old_bif(void)
 
    switch(fractype) {
       case BIFURCATION:
-      case LBIFURCATION:
       case BIFSTEWART:
-      case LBIFSTEWART:
       case BIFLAMBDA:
-      case LBIFLAMBDA:
         set_trig_array(0,s_ident);
         break;
 
       case BIFEQSINPI:
-      case LBIFEQSINPI:
       case BIFADSINPI:
-      case LBIFADSINPI:
         set_trig_array(0,s_sin);
         break;
    }
@@ -986,9 +984,7 @@ void set_function_parm_defaults(void)
    switch(fractype) 
    {
       case FPPOPCORN:
-      case LPOPCORN:
       case FPPOPCORNJUL:
-      case LPOPCORNJUL:
          set_trig_array(0,s_sin);
          set_trig_array(1,s_tan);
          set_trig_array(2,s_sin);
@@ -1007,29 +1003,17 @@ void backwards_v18(void)
 {
   if(!functionpreloaded)
     set_if_old_bif(); /* old bifs need function set, JCO 7/5/92 */
-  if(fractype==MANDELTRIG && usr_floatflag==1
-         && save_release < 1800 && bailout == 0)
-    bailout = 2500;
-  if(fractype==LAMBDATRIG && usr_floatflag==1
-         && save_release < 1800 && bailout == 0)
-    bailout = 2500;
 }
 
 void backwards_v19(void)
 {
-  if(fractype==MARKSJULIA && save_release < 1825) {
-    if(param[2] == 0)
-       param[2] = 2;
-    else
-       param[2] += 1;
-  }
   if(fractype==MARKSJULIAFP && save_release < 1825) {
     if(param[2] == 0)
        param[2] = 2;
     else
        param[2] += 1;
   }
-  if((fractype==FORMULA || fractype==FFORMULA) && save_release < 1824)
+  if((fractype==FFORMULA) && save_release < 1824)
     inversion[0] = inversion[1] = inversion[2] = invert = 0;
   if(fix_bof())
     no_mag_calc = 1; /* fractal has old bof60/61 problem with magnitude */
@@ -1047,13 +1031,12 @@ void backwards_v19(void)
 
 void backwards_v20(void)
 { /* Fractype == FP type is not seen from PAR file ????? */
-  if((fractype == MANDELFP || fractype == JULIAFP ||
-      fractype == MANDEL || fractype == JULIA) &&
+  if((fractype == MANDELFP || fractype == JULIAFP) &&
      (outside <= REAL && outside >= SUM) && save_release <= 1960)
     bad_outside = 1;
   else
     bad_outside = 0;
-  if((fractype == FORMULA || fractype == FFORMULA) &&
+  if((fractype == FFORMULA) &&
       (save_release < 1900 || debugflag == 94))
     ldcheck = 1;
   else
@@ -1071,25 +1054,21 @@ int check_back(void) {
 */
 int ret = 0;
    if (fractype == LYAPUNOV ||
-       fractype == FROTH || fractype == FROTHFP ||
+       fractype == FROTHFP ||
        fix_bof() || fix_period_bof() || use_old_distest || decomp[0] == 2 ||
-       (fractype == FORMULA && save_release <= 1920) ||
        (fractype == FFORMULA && save_release <= 1920) ||
        (LogFlag != 0 && save_release <= 2001) ||
-       (fractype == TRIGSQR && save_release < 1900) ||
        (inside == STARTRAIL && save_release < 1825) ||
        (maxit > 32767 && save_release <= 1950) ||
        (distest && save_release <=1950) ||
        ((outside <= REAL && outside >= ATAN) &&
           save_release <= 1960) ||
        (fractype == FPPOPCORN && save_release <= 1960) ||
-       (fractype == LPOPCORN && save_release <= 1960) ||
        (fractype == FPPOPCORNJUL && save_release <= 1960) ||
-       (fractype == LPOPCORNJUL && save_release <= 1960) ||
        (inside == FMODI && save_release <= 2000) ||
        ((inside == ATANI || outside == ATAN) && save_release <= 2005) ||
        (fractype == LAMBDATRIGFP && trigndx[0] == EXP && save_release <= 2002) ||
-       ((fractype == JULIBROT || fractype == JULIBROTFP) &&
+       ((fractype == JULIBROTFP) &&
           (neworbittype == QUATFP || neworbittype == HYPERCMPLXFP) &&
            save_release <= 2002)
        )
@@ -1103,7 +1082,7 @@ int ret = 0;
  if (inside <= BOF60 && inside >= BOF61 && save_release < 1826)
     if ((curfractalspecific->calctype == StandardFractal &&
         (curfractalspecific->flags & BAILTEST) == 0) ||
-        (fractype==FORMULA || fractype==FFORMULA))
+        (fractype==FFORMULA))
         ret = 1;
 return (ret);
 }
@@ -1258,7 +1237,7 @@ rescan:  /* entry for changed browse parms */
            is_visible_window(&winlist,&read_info,&blk_5_info)
          )
          {
-           far_strcpy(winlist.name,DTA.filename);
+           _fstrcpy(winlist.name, DTA.filename);
            drawindow(color_of_box,&winlist);
            boxcount <<= 1; /*boxcount*2;*/ /* double for byte count */
            winlist.boxcount = boxcount;
@@ -1377,7 +1356,7 @@ rescan:  /* entry for changed browse parms */
 #endif
         case ENTER:
         case ENTER_2:   /* this file please */
-          far_strcpy(browsename,winlist.name);
+          _fstrcpy(browsename, winlist.name);
           done = 1;
           break;
 
@@ -1396,7 +1375,7 @@ rescan:  /* entry for changed browse parms */
           cleartempmsg();
           strcpy(mesg,"");
           strcat(mesg,"Delete ");
-          far_strcat(mesg,winlist.name);
+          _fstrcat(mesg, winlist.name);
           strcat(mesg,"? (Y/N)");
           showtempmsg(mesg);
           while (!keypressed()) ;
@@ -1414,7 +1393,7 @@ rescan:  /* entry for changed browse parms */
           if ( !unlink(tmpmask)) {
           /* do a rescan */
             done = 3;
-            far_strcpy(oldname,winlist.name);
+            _fstrcpy(oldname, winlist.name);
             tmpmask[0] = '\0';
             check_history(oldname,tmpmask);
             break;
@@ -1440,7 +1419,7 @@ rescan:  /* entry for changed browse parms */
          strcpy(mesg,"");
          {
          static FCODE msg[] = {"Enter the new filename for "};
-         far_strcat((char far *)mesg,msg);
+         _fstrcat(mesg, msg);
          }
          splitpath(readname,drive,dir,NULL,NULL);
          splitpath(winlist.name,NULL,NULL,fname,ext);
@@ -1459,9 +1438,9 @@ rescan:  /* entry for changed browse parms */
           else {
            splitpath(newname,NULL,NULL,fname,ext);
            makepath(tmpmask,NULL,NULL,fname,ext);
-           far_strcpy(oldname,winlist.name);
+           _fstrcpy(oldname, winlist.name);
            check_history(oldname,tmpmask);
-           far_strcpy(winlist.name,tmpmask);
+           _fstrcpy(winlist.name, tmpmask);
            }
           }
          MoveToMemory(winlistptr,(U16)sizeof(struct window),1L,(long)index,browsehandle);
@@ -1666,12 +1645,12 @@ static char is_visible_window
       bt_t5   = alloc_stack(two_di_len);
       bt_t6   = alloc_stack(two_di_len);
 
-      far_memcpy((char far *)bt_t1,blk_5_info->apm_data,(two_di_len));
-      far_memcpy((char far *)bt_t2,blk_5_info->apm_data+two_di_len,(two_di_len));
-      far_memcpy((char far *)bt_t3,blk_5_info->apm_data+2*two_di_len,(two_di_len));
-      far_memcpy((char far *)bt_t4,blk_5_info->apm_data+3*two_di_len,(two_di_len));
-      far_memcpy((char far *)bt_t5,blk_5_info->apm_data+4*two_di_len,(two_di_len));
-      far_memcpy((char far *)bt_t6,blk_5_info->apm_data+5*two_di_len,(two_di_len));
+      _fmemcpy(bt_t1, blk_5_info->apm_data, two_di_len);
+      _fmemcpy(bt_t2, blk_5_info->apm_data+two_di_len, two_di_len);
+      _fmemcpy(bt_t3, blk_5_info->apm_data+2*two_di_len, two_di_len);
+      _fmemcpy(bt_t4, blk_5_info->apm_data+3*two_di_len, two_di_len);
+      _fmemcpy(bt_t5, blk_5_info->apm_data+4*two_di_len, two_di_len);
+      _fmemcpy(bt_t6, blk_5_info->apm_data+5*two_di_len, two_di_len);
 
       convert_bf(bt_xmin, bt_t1, two_len, two_di_len);
       convert_bf(bt_xmax, bt_t2, two_len, two_di_len);
@@ -1854,8 +1833,8 @@ static char functionOK( struct fractal_info *info, int numfn)
 static char typeOK( struct fractal_info *info, struct ext_blk_3 *blk_3_info )
 {
  int numfn;
-   if( (fractype == FORMULA || fractype == FFORMULA) &&
-     (info->fractal_type == FORMULA || info->fractal_type == FFORMULA) )
+   if( (fractype == FFORMULA) &&
+     (info->fractal_type == FFORMULA) )
    {
        if( !stricmp(blk_3_info->form_name,FormName) )
        {
@@ -1868,8 +1847,7 @@ static char typeOK( struct fractal_info *info, struct ext_blk_3 *blk_3_info )
        else
          return(0); /* two formulas but names don't match */
    }
-   else if(info->fractal_type == fractype ||
-           info->fractal_type == curfractalspecific->tofloat)
+   else if(info->fractal_type == fractype)
    {
      numfn = (curfractalspecific->flags >> 6) & 7;
      if (numfn>0)

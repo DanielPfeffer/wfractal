@@ -15,9 +15,12 @@ Additional fractal-specific modules are also invoked from CALCFRAC:
   and more
  -------------------------------------------------------------------- */
 
-#include <string.h>
 #include <limits.h>
+#include <string.h>
 #include <time.h>
+
+#include <mem.h>
+
   /* see Fractint.c for a description of the "include"  hierarchy */
 #include "port.h"
 #include "prototyp.h"
@@ -85,16 +88,7 @@ char far dif_lb[] = {
 /* added for testing autologmap() */
 static long autologmap(void);
 
-#ifndef XFRACT
-#define atan2l          atan2
-#define fabsl           fabs
-#define logl            log
-#define sqrtl           sqrt
-#endif
-
-_LCMPLX linitorbit;
-long lmagnitud, llimit, llimit2, lclosenuff, l16triglim;
-_CMPLX init,tmp,old,new,saved;
+_CMPLX init, tmp, old, new, saved;
 int color;
 long coloriter, oldcoloriter, realcoloriter;
 int row, col, passes;
@@ -117,7 +111,6 @@ double closeprox = 0.01;
 
 double closenuff;
 int pixelpi; /* value of pi in pixels */
-unsigned long lm;               /* magnitude limit (CALCMAND) */
 
 /* ORBIT variables */
 int     show_orbit;                     /* flag to turn on and off */
@@ -185,7 +178,6 @@ unsigned int prefix[2][maxyblk][maxxblk]; /* common temp */
 int nxtscreenflag; /* for cellular next screen generation */
 int     attractors;                 /* number of finite attractors  */
 _CMPLX  attr[N_ATTR];       /* finite attractor vals (f.p)  */
-_LCMPLX lattr[N_ATTR];      /* finite attractor vals (int)  */
 int    attrperiod[N_ATTR];          /* period of the finite attractor */
 
 /***** vars for new btm *****/
@@ -233,30 +225,24 @@ static int showdot_width = 0;
    methods are not used - in these cases a normal
    modulus test is used                              */
 
-#ifndef XFRACT
 double fmodtest(void)
 {
    double result;
-#else
-LDBL fmodtest(void)
-{
-   LDBL result;
-#endif
    
    if (inside==FMODI && save_release <= 2000) /* for backwards compatibility */
    {
-      if (magnitude == 0.0 || no_mag_calc == 0 || integerfractal)
-         result=sqr(new.x)+sqr(new.y);
+      if ((magnitude == 0.0) || (no_mag_calc == 0))
+         result = sqr(new.x)+sqr(new.y);
       else
-         result=magnitude; /* don't recalculate */
-      return (result);
+         result = magnitude; /* don't recalculate */
+      return result;
    }
 
    switch(bailoutest)
    {
    case (Mod):
       {
-      if (magnitude == 0.0 || no_mag_calc == 0 || integerfractal)
+      if ((magnitude == 0.0) || (no_mag_calc == 0))
          result=sqr(new.x)+sqr(new.y);
       else
          result=magnitude; /* don't recalculate */
@@ -514,7 +500,6 @@ int logtable_in_extra_ok(void)
 {
    if(((2L*(long)(xdots+ydots)*sizeof(double)+MaxLTSize+1) < (1L<<16))
       && (bf_math==0)
-      && (fractype != FORMULA)
       && (fractype != FFORMULA))
       return(1);
    else
@@ -561,8 +546,6 @@ int calcfract(void)
 
    /* following delta values useful only for types with rotation disabled */
    /* currently used only by bifurcation */
-   if (integerfractal)
-      distest = 0;
    parm.x   = param[0];
    parm.y   = param[1];
    parm2.x  = param[2];
@@ -651,7 +634,6 @@ int calcfract(void)
       else
          SetupLogTable();
    }
-   lm = 4L << bitshift;                 /* CALCMAND magnitude limit */
 
    if (save_release > 2002)
       atan_colors = colors;
@@ -704,20 +686,6 @@ int calcfract(void)
    closenuff = ddelmin*pow(2.0,-(double)(abs(periodicitycheck)));
    rqlim_save = rqlim;
    rqlim2 = sqrt(rqlim);
-   if (integerfractal)          /* for integer routines (lambda) */
-   {
-      lparm.x = (long)(parm.x * fudge);    /* real portion of Lambda */
-      lparm.y = (long)(parm.y * fudge);    /* imaginary portion of Lambda */
-      lparm2.x = (long)(parm2.x * fudge);  /* real portion of Lambda2 */
-      lparm2.y = (long)(parm2.y * fudge);  /* imaginary portion of Lambda2 */
-      llimit = (long)(rqlim * fudge);      /* stop if magnitude exceeds this */
-      if (llimit <= 0) llimit = 0x7fffffffL; /* klooge for integer math */
-      llimit2 = (long)(rqlim2 * fudge);    /* stop if magnitude exceeds this */
-      lclosenuff = (long)(closenuff * fudge); /* "close enough" value */
-      l16triglim = 8L<<16;         /* domain limit of fast trig functions */
-      linitorbit.x = (long)(initorbit.x * fudge);
-      linitorbit.y = (long)(initorbit.y * fudge);
-   }
    resuming = (calc_status == 2);
    if (!resuming) /* free resume_info memory if any is hanging around */
    {
@@ -748,7 +716,6 @@ int calcfract(void)
       { /* not a stand-alone */
          /* next two lines in case periodicity changed */
          closenuff = ddelmin*pow(2.0,-(double)(abs(periodicitycheck)));
-         lclosenuff = (long)(closenuff * fudge); /* "close enough" value */
          setsymmetry(symmetry,0);
          timer(0,calctype); /* non-standard fractal engine */
       }
@@ -940,7 +907,7 @@ static void perform_worklist()
          if (rqlim < DEM_BAILOUT)         /* so go straight for dem bailout */
             rqlim = DEM_BAILOUT;
       if (curfractalspecific->tojulia != NOFRACTAL || use_old_distest
-          || fractype == FORMULA || fractype == FFORMULA)
+          || fractype == FFORMULA)
          dem_mandel = 1; /* must be mandel type, formula, or old PAR/GIF */
       else
          dem_mandel = 0;
@@ -1065,7 +1032,6 @@ static void perform_worklist()
 
       /* some common initialization for escape-time pixel level routines */
       closenuff = ddelmin*pow(2.0,-(double)(abs(periodicitycheck)));
-      lclosenuff = (long)(closenuff * fudge); /* "close enough" value */
       kbdcount=max_kbdcount;
 
       setsymmetry(symmetry,1);
@@ -1555,7 +1521,7 @@ static int sticky_orbits(void)
    case 'f':  /* this code does not yet work??? */
       {
       double Xctr,Yctr;
-      LDBL Magnification; /* LDBL not really needed here, but used to match function parameters */
+      double Magnification; /* double not really needed here, but used to match function parameters */
       double Xmagfactor,Rotation,Skew;
       int angle;
       double factor = PI / 180.0;
@@ -1591,7 +1557,7 @@ static int sticky_orbits(void)
 }
 
 #ifndef XFRACT
-#define LDBL            double
+#define double            double
 #endif
 
 static int OneOrTwoPass(void)
@@ -1680,8 +1646,6 @@ static int _fastcall StandardCalc(int passnum)
 int calcmand(void)              /* fast per pixel 1/2/b/g, called with row & col set */
 {
    /* setup values from far array to avoid using es reg in calcmand.asm */
-   linitx = lxpixel();
-   linity = lypixel();
    if (calcmandasm() >= 0)
    {
       if ((LogTable || Log_Calc) /* map color, but not if maxit & adjusted for inside,etc */
@@ -1779,7 +1743,6 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
    long savemaxit;
    double tantable[16];
    int hooper = 0;
-   long lcloseprox;
    double memvalue = 0.0;
    double min_orbit = 100000.0; /* orbit value closest to origin */
    long   min_index = 0;        /* iteration of min_orbit */
@@ -1788,18 +1751,15 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
    int caught_a_cycle;
    long savedand;
    int savedincr;       /* for periodicity checking */
-   _LCMPLX lsaved;
    int i, attracted;
-   _LCMPLX lat;
    _CMPLX  at;
    _CMPLX deriv;
    long dem_color = -1;
    _CMPLX dem_new;
    int check_freq;
-   LDBL totaldist = 0.0;
+   double totaldist = 0.0;
    _CMPLX lastz;
 
-   lcloseprox = (long)(closeprox*fudge);
    savemaxit = maxit;
 #ifdef NUMSAVED
    for(i=0;i<NUMSAVED;i++)
@@ -1831,8 +1791,6 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
       oldcoloriter = firstsavedand;
 #endif
    /* really fractal specific, but we'll leave it here */
-   if (!integerfractal)
-   {
       if (useinitorbit == 1)
          saved = initorbit;
       else {
@@ -1871,20 +1829,10 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
          deriv.y = 0;
          magnitude = 0;
       }
-   }
-   else
-   {
-      if (useinitorbit == 1)
-         lsaved = linitorbit;
-      else {
-         lsaved.x = 0;
-         lsaved.y = 0;
-      }
-      linit.y = lypixel();
-   }
+
    orbit_ptr = 0;
    coloriter = 0;
-   if(fractype==JULIAFP || fractype==JULIA)
+   if(fractype==JULIAFP)
       coloriter = -1;
    caught_a_cycle = 0;
    if (inside == PERIOD) {
@@ -1902,7 +1850,6 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
    if (inside <= BOF60 && inside >= BOF61)
    {
       magnitude = 0.0;
-      lmagnitud = 0;
       min_orbit = 100000.0;
    }
    overflow = 0;                /* reset integer math overflow flag */
@@ -1912,12 +1859,7 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
    attracted = FALSE;
 
    if (outside == TDIS) {
-      if(integerfractal)
-      {
-         old.x = ((LDBL)lold.x) / fudge;
-         old.y = ((LDBL)lold.y) / fudge;
-      }
-      else if (bf_math == BIGNUM)
+      if (bf_math == BIGNUM)
          old = cmplxbntofloat(&bnold);
       else if (bf_math==BIGFLT)
          old = cmplxbftofloat(&bfold);
@@ -1943,7 +1885,7 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
 
       if (distest)
       {
-         LDBL ftemp;
+         double ftemp;
          /* Distance estimator for points near Mandelbrot set */
          /* Original code by Phil Wilson, hacked around by PB */
          /* Algorithms from Peitgen & Saupe, Science of Fractal Images, p.198 */
@@ -1986,16 +1928,11 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
               || overflow)
             break;
       if (show_orbit) {
-         if (!integerfractal)
-         {
             if (bf_math == BIGNUM)
                new = cmplxbntofloat(&bnnew);
             else if (bf_math==BIGFLT)
                new = cmplxbftofloat(&bfnew);
             plot_orbit((double)new.x, (double)new.y, -1);
-         }
-         else
-            iplot_orbit(lnew.x, lnew.y, -1);
       }
       if( inside < -1)
       {
@@ -2007,14 +1944,6 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
          {
             if(0 < coloriter && coloriter < 16)
             {
-               if (integerfractal)
-               {
-                  new.x = lnew.x;
-                  new.x /= fudge;
-                  new.y = lnew.y;
-                  new.y /= fudge;
-               }
-
                if (save_release > 1824) {
                  if(new.x > STARTRAILMAX)
                     new.x = STARTRAILMAX;
@@ -2039,21 +1968,7 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
          else if(inside == EPSCROSS)
          {
             hooper = 0;
-            if(integerfractal)
-            {
-               if(labs(lnew.x) < labs(lcloseprox))
-               {
-                  hooper = (lcloseprox>0? 1 : -1); /* close to y axis */
-                  goto plot_inside;
-               }
-               else if(labs(lnew.y) < labs(lcloseprox))
-               {
-                  hooper = (lcloseprox>0 ? 2: -2); /* close to x axis */
-                  goto plot_inside;
-               }
-            }
-            else
-            {
+
                if(fabsl(new.x) < fabsl(closeprox))
                {
                   hooper = (closeprox>0? 1 : -1); /* close to y axis */
@@ -2064,32 +1979,19 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
                   hooper = (closeprox>0? 2 : -2); /* close to x axis */
                   goto plot_inside;
                }
-            }
+
          }
          else if (inside == FMODI)
          {
-            LDBL mag;
-            if(integerfractal)
-            {
-               new.x = ((LDBL)lnew.x) / fudge;
-               new.y = ((LDBL)lnew.y) / fudge;
-            }
-            mag = (LDBL)fmodtest();
+            double mag;
+            mag = (double)fmodtest();
             if(mag < closeprox)
                memvalue = mag;
          }
          else if (inside <= BOF60 && inside >= BOF61)
          {
-            if (integerfractal)
-            {
-               if (lmagnitud == 0 || no_mag_calc == 0)
-                  lmagnitud = lsqr(lnew.x) + lsqr(lnew.y);
-               magnitude = lmagnitud;
-               magnitude = magnitude / fudge;
-            }
-            else
-               if (magnitude == 0.0 || no_mag_calc == 0)
-                  magnitude = sqr(new.x) + sqr(new.y);
+            if (magnitude == 0.0 || no_mag_calc == 0)
+               magnitude = sqr(new.x) + sqr(new.y);
             if (magnitude < min_orbit)
             {
                min_orbit = (double)magnitude;
@@ -2106,24 +2008,14 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
             new = cmplxbftofloat(&bfnew);
          if (outside == TDIS)
          {
-            if(integerfractal)
-            {
-               new.x = ((LDBL)lnew.x) / fudge;
-               new.y = ((LDBL)lnew.y) / fudge;
-            }
             totaldist += sqrt(sqr(lastz.x-new.x)+sqr(lastz.y-new.y));
             lastz.x = new.x;
             lastz.y = new.y;
          }
          else if (outside == FMOD)
          {
-            LDBL mag;
-            if(integerfractal)
-            {
-               new.x = ((LDBL)lnew.x) / fudge;
-               new.y = ((LDBL)lnew.y) / fudge;
-            }
-            mag = (LDBL)fmodtest();
+            double mag;
+            mag = (double)fmodtest();
             if(mag < closeprox)
                memvalue = mag;
          }
@@ -2131,29 +2023,6 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
 
       if (attractors > 0)       /* finite attractor in the list   */
       {                         /* NOTE: Integer code is UNTESTED */
-         if (integerfractal)
-         {
-            for (i = 0; i < attractors; i++)
-            {
-                lat.x = lnew.x - lattr[i].x;
-                lat.x = lsqr(lat.x);
-                if (lat.x < l_at_rad)
-                {
-                   lat.y = lnew.y - lattr[i].y;
-                   lat.y = lsqr(lat.y);
-                   if (lat.y < l_at_rad)
-                   {
-                      if ((lat.x + lat.y) < l_at_rad)
-                      {
-                         attracted = TRUE;
-                         if (finattract<0) coloriter = (coloriter%attrperiod[i])+1;
-                         break;
-                      }
-                   }
-                }
-            }
-         }
-         else
          {
             for (i = 0; i < attractors; i++)
             {
@@ -2184,9 +2053,7 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
          if ((coloriter & savedand) == 0)            /* time to save a new value */
          {
             savedcoloriter = coloriter;
-            if (integerfractal)
-               lsaved = lnew;/* integer fractals */
-            else if (bf_math == BIGNUM)
+            if (bf_math == BIGNUM)
             {
                copy_bn(bnsaved.x,bnnew.x);
                copy_bn(bnsaved.y,bnnew.y);
@@ -2215,13 +2082,7 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
          }
          else                /* check against an old save */
          {
-            if (integerfractal)     /* floating-pt periodicity chk */
-            {
-               if (labs(lsaved.x - lnew.x) < lclosenuff)
-                  if (labs(lsaved.y - lnew.y) < lclosenuff)
-                     caught_a_cycle = 1;
-            }
-            else if (bf_math == BIGNUM)
+            if (bf_math == BIGNUM)
             {
                if (cmp_bn(abs_a_bn(sub_bn(bntmp,bnsaved.x,bnnew.x)), bnclosenuff) < 0)
                   if (cmp_bn(abs_a_bn(sub_bn(bntmp,bnsaved.y,bnnew.y)), bnclosenuff) < 0)
@@ -2294,20 +2155,15 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
 
    if (potflag)
    {
-      if (integerfractal)       /* adjust integer fractals */
+      if (bf_math==BIGNUM)
       {
-         new.x = ((LDBL)lnew.x) / fudge;
-         new.y = ((LDBL)lnew.y) / fudge;
-      }
-      else if (bf_math==BIGNUM)
-      {
-         new.x = (LDBL)bntofloat(bnnew.x);
-         new.y = (LDBL)bntofloat(bnnew.y);
+         new.x = (double)bntofloat(bnnew.x);
+         new.y = (double)bntofloat(bnnew.y);
       }
       else if (bf_math==BIGFLT)
       {
-         new.x = (LDBL)bftofloat(bfnew.x);
-         new.y = (LDBL)bftofloat(bfnew.y);
+         new.x = (double)bftofloat(bfnew.x);
+         new.y = (double)bftofloat(bfnew.y);
       }
       magnitude = sqr(new.x) + sqr(new.y);
       coloriter = potential((double)magnitude, coloriter);
@@ -2322,20 +2178,15 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
 
    if (outside < -1)  /* these options by Richard Hughes modified by TW */
    {
-      if (integerfractal)
+      if(bf_math==BIGNUM)
       {
-         new.x = ((LDBL)lnew.x) / fudge;
-         new.y = ((LDBL)lnew.y) / fudge;
-      }
-      else if(bf_math==BIGNUM)
-      {
-         new.x = (LDBL)bntofloat(bnnew.x);
-         new.y = (LDBL)bntofloat(bnnew.y);
+         new.x = (double)bntofloat(bnnew.x);
+         new.y = (double)bntofloat(bnnew.y);
       }
       else if (bf_math==BIGFLT)
       {
-         new.x = (LDBL)bftofloat(bfnew.x);
-         new.y = (LDBL)bftofloat(bfnew.y);
+         new.x = (double)bftofloat(bfnew.x);
+         new.y = (double)bftofloat(bfnew.y);
       }
       /* Add 7 to overcome negative values on the MANDEL    */
       if (outside == REAL)               /* "real" */
@@ -2343,7 +2194,7 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
       else if (outside == IMAG)          /* "imag" */
          coloriter += (long)new.y + 7;
       else if (outside == MULT  && new.y)  /* "mult" */
-          coloriter = (long)((LDBL)coloriter * (new.x/new.y));
+          coloriter = (long)((double)coloriter * (new.x/new.y));
       else if (outside == SUM)           /* "sum" */
           coloriter += (long)(new.x + new.y);
       else if (outside == ATAN)          /* "atan" */
@@ -2366,7 +2217,7 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
 
    if (distest)
    {
-      LDBL dist,temp;
+      double dist,temp;
       dist = sqr(new.x) + sqr(new.y);
       if (dist == 0 || overflow)
          dist = 0;
@@ -2408,12 +2259,6 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
       decomposition();
    else if (biomorph != -1)
    {
-      if (integerfractal)
-      {
-         if (labs(lnew.x) < llimit2 || labs(lnew.y) < llimit2)
-            coloriter = biomorph;
-      }
-      else
          if (fabsl(new.x) < rqlim2 || fabsl(new.y) < rqlim2)
             coloriter = biomorph;
    }
@@ -2469,30 +2314,20 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
          coloriter = (long)(memvalue * colors / closeprox);
       }
       else if (inside == ATANI)          /* "atan" */
-         if (integerfractal) {
-            new.x = ((LDBL)lnew.x) / fudge;
-            new.y = ((LDBL)lnew.y) / fudge;
-            coloriter = (long)fabsl(atan2l(new.y,new.x)*atan_colors/PI);
-         }
-         else
-            coloriter = (long)fabsl(atan2l(new.y,new.x)*atan_colors/PI);
+      {
+         coloriter = (long)fabsl(atan2l(new.y,new.x)*atan_colors/PI);
+      }
       else if (inside == BOF60)
+      {
          coloriter = (long)(sqrtl(min_orbit) * 75);
+      }
       else if (inside == BOF61)
+      {
          coloriter = min_index;
+      }
       else if (inside == ZMAG)
       {
-         if (integerfractal)
-         {
-            /*
-            new.x = ((double)lnew.x) / fudge;
-            new.y = ((double)lnew.y) / fudge;
-            coloriter = (long)((((double)lsqr(lnew.x))/fudge + ((double)lsqr(lnew.y))/fudge) * (maxit>>1) + 1);
-            */
-            coloriter = (long)(((LDBL)lmagnitud/fudge) * (maxit>>1) + 1);
-         }
-         else
-            coloriter = (long)((sqr(new.x) + sqr(new.y)) * (maxit>>1) + 1);
+         coloriter = (long)((sqr(new.x) + sqr(new.y)) * (maxit>>1) + 1);
       }
       else /* inside == -1 */
          coloriter = maxit;
@@ -2540,153 +2375,26 @@ int StandardFractal(void)       /* per pixel 1/2/b/g, called with row & col set 
 /**************** standardfractal doodad subroutines *********************/
 static void decomposition(void)
 {
-/* static double cos45     = 0.70710678118654750; */ /* cos 45  degrees */
-   static double sin45     = 0.70710678118654750; /* sin 45     degrees */
-   static double cos22_5   = 0.92387953251128670; /* cos 22.5   degrees */
-   static double sin22_5   = 0.38268343236508980; /* sin 22.5   degrees */
-   static double cos11_25  = 0.98078528040323040; /* cos 11.25  degrees */
-   static double sin11_25  = 0.19509032201612820; /* sin 11.25  degrees */
-   static double cos5_625  = 0.99518472667219690; /* cos 5.625  degrees */
-   static double sin5_625  = 0.09801714032956060; /* sin 5.625  degrees */
-   static double tan22_5   = 0.41421356237309500; /* tan 22.5   degrees */
-   static double tan11_25  = 0.19891236737965800; /* tan 11.25  degrees */
-   static double tan5_625  = 0.09849140335716425; /* tan 5.625  degrees */
-   static double tan2_8125 = 0.04912684976946725; /* tan 2.8125 degrees */
-   static double tan1_4063 = 0.02454862210892544; /* tan 1.4063 degrees */
-/* static long lcos45     ;*/ /* cos 45   degrees */
-   static long lsin45     ; /* sin 45     degrees */
-   static long lcos22_5   ; /* cos 22.5   degrees */
-   static long lsin22_5   ; /* sin 22.5   degrees */
-   static long lcos11_25  ; /* cos 11.25  degrees */
-   static long lsin11_25  ; /* sin 11.25  degrees */
-   static long lcos5_625  ; /* cos 5.625  degrees */
-   static long lsin5_625  ; /* sin 5.625  degrees */
-   static long ltan22_5   ; /* tan 22.5   degrees */
-   static long ltan11_25  ; /* tan 11.25  degrees */
-   static long ltan5_625  ; /* tan 5.625  degrees */
-   static long ltan2_8125 ; /* tan 2.8125 degrees */
-   static long ltan1_4063 ; /* tan 1.4063 degrees */
-   static long reset_fudge = -1;
+/* static double const cos45     = 0.70710678118654750; */ /* cos 45  degrees */
+   static double const sin45     = 0.70710678118654750; /* sin 45     degrees */
+   static double const cos22_5   = 0.92387953251128670; /* cos 22.5   degrees */
+   static double const sin22_5   = 0.38268343236508980; /* sin 22.5   degrees */
+   static double const cos11_25  = 0.98078528040323040; /* cos 11.25  degrees */
+   static double const sin11_25  = 0.19509032201612820; /* sin 11.25  degrees */
+   static double const cos5_625  = 0.99518472667219690; /* cos 5.625  degrees */
+   static double const sin5_625  = 0.09801714032956060; /* sin 5.625  degrees */
+   static double const tan22_5   = 0.41421356237309500; /* tan 22.5   degrees */
+   static double const tan11_25  = 0.19891236737965800; /* tan 11.25  degrees */
+   static double const tan5_625  = 0.09849140335716425; /* tan 5.625  degrees */
+   static double const tan2_8125 = 0.04912684976946725; /* tan 2.8125 degrees */
+   static double const tan1_4063 = 0.02454862210892544; /* tan 1.4063 degrees */
+
    int temp = 0;
    int save_temp = 0;
    int i;
-   _LCMPLX lalt;
    _CMPLX alt;
    coloriter = 0;
-   if (integerfractal) /* the only case */
-   {
-      if (reset_fudge != fudge)
-      {
-         reset_fudge = fudge;
-         /* lcos45     = (long)(cos45 * fudge); */
-         lsin45     = (long)(sin45 * fudge);
-         lcos22_5   = (long)(cos22_5 * fudge);
-         lsin22_5   = (long)(sin22_5 * fudge);
-         lcos11_25  = (long)(cos11_25 * fudge);
-         lsin11_25  = (long)(sin11_25 * fudge);
-         lcos5_625  = (long)(cos5_625 * fudge);
-         lsin5_625  = (long)(sin5_625 * fudge);
-         ltan22_5   = (long)(tan22_5 * fudge);
-         ltan11_25  = (long)(tan11_25 * fudge);
-         ltan5_625  = (long)(tan5_625 * fudge);
-         ltan2_8125 = (long)(tan2_8125 * fudge);
-         ltan1_4063 = (long)(tan1_4063 * fudge);
-      }
-      if (lnew.y < 0)
-      {
-         temp = 2;
-         lnew.y = -lnew.y;
-      }
 
-      if (lnew.x < 0)
-      {
-         ++temp;
-         lnew.x = -lnew.x;
-      }
-      if (decomp[0] == 2 && save_release >= 1827)
-      {
-        save_temp = temp;
-        if(temp==2) save_temp = 3;
-        if(temp==3) save_temp = 2;
-      }
-
-      if (decomp[0] >= 8)
-      {
-         temp <<= 1;
-         if (lnew.x < lnew.y)
-         {
-            ++temp;
-            lalt.x = lnew.x; /* just */
-            lnew.x = lnew.y; /* swap */
-            lnew.y = lalt.x; /* them */
-         }
-
-         if (decomp[0] >= 16)
-         {
-            temp <<= 1;
-            if (multiply(lnew.x,ltan22_5,bitshift) < lnew.y)
-            {
-               ++temp;
-               lalt = lnew;
-               lnew.x = multiply(lalt.x,lcos45,bitshift) +
-                   multiply(lalt.y,lsin45,bitshift);
-               lnew.y = multiply(lalt.x,lsin45,bitshift) -
-                   multiply(lalt.y,lcos45,bitshift);
-            }
-
-            if (decomp[0] >= 32)
-            {
-               temp <<= 1;
-               if (multiply(lnew.x,ltan11_25,bitshift) < lnew.y)
-               {
-                  ++temp;
-                  lalt = lnew;
-                  lnew.x = multiply(lalt.x,lcos22_5,bitshift) +
-                      multiply(lalt.y,lsin22_5,bitshift);
-                  lnew.y = multiply(lalt.x,lsin22_5,bitshift) -
-                      multiply(lalt.y,lcos22_5,bitshift);
-               }
-
-               if (decomp[0] >= 64)
-               {
-                  temp <<= 1;
-                  if (multiply(lnew.x,ltan5_625,bitshift) < lnew.y)
-                  {
-                     ++temp;
-                     lalt = lnew;
-                     lnew.x = multiply(lalt.x,lcos11_25,bitshift) +
-                         multiply(lalt.y,lsin11_25,bitshift);
-                     lnew.y = multiply(lalt.x,lsin11_25,bitshift) -
-                         multiply(lalt.y,lcos11_25,bitshift);
-                  }
-
-                  if (decomp[0] >= 128)
-                  {
-                     temp <<= 1;
-                     if (multiply(lnew.x,ltan2_8125,bitshift) < lnew.y)
-                     {
-                        ++temp;
-                        lalt = lnew;
-                        lnew.x = multiply(lalt.x,lcos5_625,bitshift) +
-                            multiply(lalt.y,lsin5_625,bitshift);
-                        lnew.y = multiply(lalt.x,lsin5_625,bitshift) -
-                            multiply(lalt.y,lcos5_625,bitshift);
-                     }
-
-                     if (decomp[0] == 256)
-                     {
-                        temp <<= 1;
-                        if (multiply(lnew.x,ltan1_4063,bitshift) < lnew.y)
-                           if ((lnew.x*ltan1_4063 < lnew.y))
-                              ++temp;
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
-   else /* double case */
    {
       if (new.y < 0)
       {
@@ -2914,8 +2622,8 @@ int  bound_trace_main(void)
         {
         static FCODE inside_outside[] = {"inside=0 or outside=0"};
         char msg[MSGLEN];
-        far_strcpy(msg,btm_cantbeused);
-        far_strcat(msg,inside_outside);
+        _fstrcpy(msg, btm_cantbeused);
+        _fstrcat(msg, inside_outside);
         stopmsg(0,msg);
         return(-1);
         }
@@ -2923,8 +2631,8 @@ int  bound_trace_main(void)
         {
         char msg[MSGLEN];
         static FCODE lessthansixteen[] = {"< 16 colors"};
-        far_strcpy(msg,btm_cantbeused);
-        far_strcat(msg,lessthansixteen);
+        _fstrcpy(msg, btm_cantbeused);
+        _fstrcat(msg, lessthansixteen);
         stopmsg(0,msg);
         return(-1);
         }
@@ -3699,19 +3407,16 @@ static void _fastcall setsymmetry(int sym, int uselist) /* set up proper symmetr
    parmsnoreal = (parm.x == 0.0 && useinitorbit != 1);
    parmsnoimag = (parm.y == 0.0 && useinitorbit != 1);
    switch (fractype)
-   { case LMANLAMFNFN:      /* These need only P1 checked. */
+   {                        /* These need only P1 checked. */
      case FPMANLAMFNFN:     /* P2 is used for a switch value */
-     case LMANFNFN:         /* These have NOPARM set in fractalp.c, */
+                            /* These have NOPARM set in fractalp.c, */
      case FPMANFNFN:        /* but it only applies to P1. */
      case FPMANDELZPOWER:   /* or P2 is an exponent */
-     case LMANDELZPOWER:
      case FPMANZTOZPLUSZPWR:
-     case MARKSMANDEL:
      case MARKSMANDELFP:
-     case MARKSJULIA:
      case MARKSJULIAFP:
        break;
-     case FORMULA:  /* Check P2, P3, P4 and P5 */
+                    /* Check P2, P3, P4 and P5 */
      case FFORMULA:
        parmszero = (parmszero && param[2] == 0.0 && param[3] == 0.0
                     && param[4] == 0.0 && param[5] == 0.0
@@ -3722,6 +3427,7 @@ static void _fastcall setsymmetry(int sym, int uselist) /* set up proper symmetr
        parmsnoimag = (parmsnoimag && param[3] == 0.0 && param[5] == 0.0
                       && param[7] == 0.0 && param[9] == 0.0);
        break;
+       
      default:   /* Check P2 for the rest */
        parmszero = (parmszero && parm2.x == 0.0 && parm2.y == 0.0);
    }

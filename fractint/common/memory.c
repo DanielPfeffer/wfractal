@@ -1,10 +1,9 @@
-#include <string.h>
+#include <ctype.h>
 #include <limits.h>
-#ifdef __APPLE__
-#include <malloc/malloc.h>
-#else
-#include <malloc.h>
-#endif
+#include <stdlib.h>
+#include <string.h>
+
+#include <mem.h>
 
 #if (!defined(XFRACT) && !defined(WINFRACT))
 #include <io.h>
@@ -16,7 +15,6 @@
 #include <varargs.h>
 #endif
 
-#include <ctype.h>
 
 #include "port.h"
 #include "prototyp.h"
@@ -190,16 +188,16 @@ static void WhichDiskError(int I_O)
    switch (I_O) {
       default:
       case 1:
-         far_strcpy(nmsg,fmsg1);
+         _fstrcpy(nmsg, fmsg1);
          break;
       case 2:
-         far_strcpy(nmsg,fmsg2);
+         _fstrcpy(nmsg, fmsg2);
          break;
       case 3:
-         far_strcpy(nmsg,fmsg3);
+         _fstrcpy(nmsg, fmsg3);
          break;
       case 4:
-         far_strcpy(nmsg,fmsg4);
+         _fstrcpy(nmsg, fmsg4);
          break;
    }
    sprintf(buf,nmsg);
@@ -240,7 +238,7 @@ static void DisplayError(int stored_at, long howmuch)
    char buf[MSGLEN*2];
    char nmsg[MSGLEN*2];
    static FCODE fmsg[] = {"Allocating %ld Bytes of %s memory failed.\nAlternate disk space is also insufficient. Goodbye"};
-   far_strcpy(nmsg,fmsg);
+   _fstrcpy(nmsg, fmsg);
    sprintf(buf,nmsg,howmuch,memstr[stored_at]);
    stopmsg(0,(char far *)buf);
 }
@@ -409,7 +407,7 @@ void DisplayMemory (void)
    tmpdisk = GetDiskSpace(); /* fix this for XFRACT ????? */
 
    tmpfar = fr_farfree();
-   far_strcpy(nmsg,fmsg);
+   _fstrcpy(nmsg, fmsg);
    sprintf(buf,nmsg,tmpextra,tmpfar,tmpexp,tmpext,tmpdisk);
    stopmsg(20,(char far *)buf);
 #endif
@@ -421,7 +419,7 @@ void DisplayHandle (U16 handle)
    char nmsg[MSGLEN];
    static FCODE fmsg[] = {"Handle %u, type %s, size %li"};
 
-   far_strcpy(nmsg,fmsg);
+   _fstrcpy(nmsg, fmsg);
    sprintf(buf,nmsg,handle,memstr[handletable[handle].Nowhere.stored_at],
            handletable[handle].Nowhere.size);
    if(stopmsg(6,(char far *)buf) == -1)
@@ -462,7 +460,7 @@ void ExitCheck (void)
             char buf[MSGLEN];
             char nmsg[MSGLEN];
             static FCODE fmsg[] = {"Memory type %s still allocated.  Handle = %i."};
-            far_strcpy(nmsg,fmsg);
+            _fstrcpy(nmsg, fmsg);
             sprintf(buf,nmsg,memstr[handletable[i].Nowhere.stored_at],i);
             stopmsg(0,(char far *)buf);
             MemoryRelease(i);
@@ -581,7 +579,7 @@ U16 MemoryAlloc(U16 size, long count, int stored_at)
       {
          longtmp /= (ext_xfer_size >> 10);
          handletable[handle].Extended.mempages = (int)longtmp;
-         far_memset(charbuf, 0, (int)ext_xfer_size); /* zero the buffer */
+         _fmemset(charbuf, 0, (int)ext_xfer_size); /* zero the buffer */
          MoveStruct.SourceHandle = 0;    /* Source is in conventional memory */
          MoveStruct.SourceOffset = (U32)charbuf;
          MoveStruct.DestHandle   = handletable[handle].Extended.xmmhandle;
@@ -644,7 +642,7 @@ dodisk:
       char buf[MSGLEN];
       char nmsg[MSGLEN];
       static FCODE fmsg[] = {"Asked for %s, allocated %lu bytes of %s, handle = %u."};
-      far_strcpy(nmsg,fmsg);
+      _fstrcpy(nmsg, fmsg);
       sprintf(buf,nmsg,memstr[stored_at],toallocate,memstr[use_this_type],handle);
       stopmsg(20,(char far *)buf);
       DisplayMemory();
@@ -753,14 +751,14 @@ int MoveToMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
 
 #if (!defined(XFRACT) && !defined(WINFRACT))
    case EXTRA: /* MoveToMemory */
-      far_memcpy(handletable[handle].Extra.extramemory+start, buffer, (U16)tomove);
+      _fmemcpy(handletable[handle].Extra.extramemory+start, buffer, (U16)tomove);
       success = TRUE; /* No way to gauge success or failure */
       break;
 #endif
 
    case FARMEM: /* MoveToMemory */
       for(i=0;i<size;i++) {
-         far_memcpy(handletable[handle].Farmem.farmemory+start, buffer, (U16)count);
+         _fmemcpy(handletable[handle].Farmem.farmemory+start, buffer, (U16)count);
          start += count;
          buffer += count;
       }
@@ -776,7 +774,7 @@ int MoveToMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       start -= (currpage * EXPWRITELEN);
       if (tmplength > tomove)
          tmplength = tomove;
-      far_memcpy(handletable[handle].Expanded.expmemory+start, buffer, (U16)tmplength);
+      _fmemcpy(handletable[handle].Expanded.expmemory+start, buffer, (U16)tmplength);
       buffer += tmplength;
       tomove -= tmplength;
 /* At a page boundary, move until less than a page left */
@@ -784,7 +782,7 @@ int MoveToMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       {
          currpage++;
          exp_seek(handle, currpage);
-         far_memcpy(handletable[handle].Expanded.expmemory, buffer, (U16)EXPWRITELEN);
+         _fmemcpy(handletable[handle].Expanded.expmemory, buffer, (U16)EXPWRITELEN);
          buffer += EXPWRITELEN;
          tomove -= EXPWRITELEN;
       }
@@ -793,7 +791,7 @@ int MoveToMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       {
          currpage++;
          exp_seek(handle, currpage);
-         far_memcpy(handletable[handle].Expanded.expmemory, buffer, (U16)tomove);
+         _fmemcpy(handletable[handle].Expanded.expmemory, buffer, (U16)tomove);
       }
       exp_seek(handle, 0); /* flush the last page out of the page frame */
       success = TRUE; /* No way to gauge success or failure */
@@ -807,14 +805,14 @@ int MoveToMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       MoveStruct.DestOffset = (U32)start;
       while (tomove > ext_xfer_size)
       {
-         far_memcpy(charbuf,buffer,(int)ext_xfer_size);
+         _fmemcpy(charbuf, buffer, ext_xfer_size);
          xmmmoveextended(&MoveStruct);
          start += ext_xfer_size;
          tomove -= ext_xfer_size;
          buffer += ext_xfer_size;
          MoveStruct.DestOffset = (U32)(start);
       }
-      far_memcpy(charbuf,buffer,(U16)tomove);
+      _fmemcpy(charbuf, buffer, tomove);
       MoveStruct.Length = (tomove % 2) ? tomove + 1 : tomove; /* must be even */
       success = xmmmoveextended(&MoveStruct);
       break;
@@ -825,7 +823,7 @@ int MoveToMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       fseek(handletable[handle].Disk.file,start,SEEK_SET);
       while (tomove > DISKWRITELEN)
       {
-         far_memcpy(diskbuf,buffer,(U16)DISKWRITELEN);
+         _fmemcpy(diskbuf, buffer, DISKWRITELEN);
          numwritten = (U16)write1(diskbuf,(U16)DISKWRITELEN,1,handletable[handle].Disk.file);
          if (numwritten != 1) {
             WhichDiskError(3);
@@ -834,7 +832,7 @@ int MoveToMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
          tomove -= DISKWRITELEN;
          buffer += DISKWRITELEN;
       }
-      far_memcpy(diskbuf,buffer,(U16)tomove);
+      _fmemcpy(diskbuf, buffer, tomove);
       numwritten = (U16)write1(diskbuf,(U16)tomove,1,handletable[handle].Disk.file);
       if (numwritten != 1) {
          WhichDiskError(3);
@@ -880,14 +878,14 @@ int MoveFromMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
 
 #if (!defined(XFRACT) && !defined(WINFRACT))
    case EXTRA: /* MoveFromMemory */
-      far_memcpy(buffer, handletable[handle].Extra.extramemory+start, (U16)tomove);
+      _fmemcpy(buffer, handletable[handle].Extra.extramemory+start, tomove);
       success = TRUE; /* No way to gauge success or failure */
       break;
 #endif
 
    case FARMEM: /* MoveFromMemory */
       for(i=0;i<size;i++) {
-         far_memcpy(buffer, handletable[handle].Farmem.farmemory+start, (U16)count);
+         _fmemcpy(buffer, handletable[handle].Farmem.farmemory+start, count);
          start += count;
          buffer += count;
       }
@@ -903,7 +901,7 @@ int MoveFromMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       start -= (currpage * EXPWRITELEN);
       if (tmplength > tomove)
          tmplength = tomove;
-      far_memcpy(buffer, handletable[handle].Expanded.expmemory+start, (U16)tmplength);
+      _fmemcpy(buffer, handletable[handle].Expanded.expmemory+start, tmplength);
       buffer += tmplength;
       tomove -= tmplength;
 /* At a page boundary, move until less than a page left */
@@ -911,7 +909,7 @@ int MoveFromMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       {
          currpage++;
          exp_seek(handle, currpage);
-         far_memcpy(buffer, handletable[handle].Expanded.expmemory, (U16)EXPWRITELEN);
+         _fmemcpy(buffer, handletable[handle].Expanded.expmemory, EXPWRITELEN);
          buffer += EXPWRITELEN;
          tomove -= EXPWRITELEN;
       }
@@ -920,7 +918,7 @@ int MoveFromMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       {
          currpage++;
          exp_seek(handle, currpage);
-         far_memcpy(buffer, handletable[handle].Expanded.expmemory, (U16)tomove);
+         _fmemcpy(buffer, handletable[handle].Expanded.expmemory, tomove);
       }
       exp_seek(handle, 0); /* flush the last page out of the page frame */
       success = TRUE; /* No way to gauge success or failure */
@@ -935,7 +933,7 @@ int MoveFromMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       while (tomove > ext_xfer_size)
       {
          xmmmoveextended(&MoveStruct);
-         far_memcpy(buffer,charbuf,(int)ext_xfer_size);
+         _fmemcpy(buffer, charbuf, ext_xfer_size);
          buffer += ext_xfer_size;
          tomove -= ext_xfer_size;
          start += ext_xfer_size;
@@ -943,7 +941,7 @@ int MoveFromMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
       }
       MoveStruct.Length = (tomove % 2) ? tomove + 1 : tomove; /* must be even */
       success = xmmmoveextended(&MoveStruct);
-      far_memcpy(buffer,charbuf,(U16)tomove);
+      _fmemcpy(buffer, charbuf, tomove);
       break;
 #endif
 
@@ -957,7 +955,7 @@ int MoveFromMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
             WhichDiskError(4);
             goto diskerror;
          }
-         far_memcpy(buffer,diskbuf,(U16)DISKWRITELEN);
+         _fmemcpy(buffer, diskbuf, DISKWRITELEN);
          tomove -= DISKWRITELEN;
          buffer += DISKWRITELEN;
       }
@@ -966,7 +964,7 @@ int MoveFromMemory(BYTE far *buffer,U16 size,long count,long offset,U16 handle)
          WhichDiskError(4);
          break;
       }
-      far_memcpy(buffer,diskbuf,(U16)tomove);
+      _fmemcpy(buffer, diskbuf, tomove);
       success = TRUE;
 diskerror:
       break;
@@ -1007,14 +1005,14 @@ int SetMemory(int value,U16 size,long count,long offset,U16 handle)
 
 #if (!defined(XFRACT) && !defined(WINFRACT))
    case EXTRA: /* SetMemory */
-      far_memset(handletable[handle].Extra.extramemory+start, value, (U16)tomove);
+      _fmemset(handletable[handle].Extra.extramemory+start, value, (U16)tomove);
       success = TRUE; /* No way to gauge success or failure */
       break;
 #endif
 
    case FARMEM: /* SetMemory */
       for(i=0;i<size;i++) {
-         far_memset(handletable[handle].Farmem.farmemory+start, value, (U16)count);
+         _fmemset(handletable[handle].Farmem.farmemory+start, value, (U16)count);
          start += count;
       }
       success = TRUE; /* No way to gauge success or failure */
@@ -1029,14 +1027,14 @@ int SetMemory(int value,U16 size,long count,long offset,U16 handle)
       start -= (currpage * EXPWRITELEN);
       if (tmplength > tomove)
          tmplength = tomove;
-      far_memset(handletable[handle].Expanded.expmemory+start, value, (U16)tmplength);
+      _fmemset(handletable[handle].Expanded.expmemory+start, value, (U16)tmplength);
       tomove -= tmplength;
 /* At a page boundary, move until less than a page left */
       while (tomove >= EXPWRITELEN)
       {
          currpage++;
          exp_seek(handle, currpage);
-         far_memcpy(handletable[handle].Expanded.expmemory, &value, (U16)EXPWRITELEN);
+         _fmemcpy(handletable[handle].Expanded.expmemory, &value, EXPWRITELEN);
          tomove -= EXPWRITELEN;
       }
 /* Less than a page left, move it */
@@ -1044,7 +1042,7 @@ int SetMemory(int value,U16 size,long count,long offset,U16 handle)
       {
          currpage++;
          exp_seek(handle, currpage);
-         far_memcpy(handletable[handle].Expanded.expmemory, &value, (U16)tomove);
+         _fmemcpy(handletable[handle].Expanded.expmemory, &value, tomove);
       }
       exp_seek(handle, 0); /* flush the last page out of the page frame */
       success = TRUE; /* No way to gauge success or failure */
@@ -1056,7 +1054,7 @@ int SetMemory(int value,U16 size,long count,long offset,U16 handle)
       MoveStruct.SourceOffset = (U32)charbuf;
       MoveStruct.DestHandle = handletable[handle].Extended.xmmhandle;
       MoveStruct.DestOffset = (U32)start;
-      far_memset(charbuf, value, (int)ext_xfer_size);
+      _fmemset(charbuf, value, (int)ext_xfer_size);
       while (tomove > ext_xfer_size)
       {
          xmmmoveextended(&MoveStruct);
@@ -1070,7 +1068,7 @@ int SetMemory(int value,U16 size,long count,long offset,U16 handle)
 #endif
 
    case DISK: /* SetMemory */
-      far_memset(diskbuf, value, (U16)DISKWRITELEN);
+      _fmemset(diskbuf, value, (U16)DISKWRITELEN);
       rewind(handletable[handle].Disk.file);
       fseek(handletable[handle].Disk.file,start,SEEK_SET);
       while (tomove > DISKWRITELEN)

@@ -23,7 +23,7 @@ fractal routines.
 
 
 int bf_math = 0;
-LDBL b_const;
+double b_const;
 
 #if (_MSC_VER >= 700)
 #pragma code_seg ("bigsetup_text")     /* place following in an overlay */
@@ -202,7 +202,7 @@ void showaspect(char *s)
 }
 
 /* compare a double and bignumber */
-void comparevalues(char *s, LDBL x, bn_t bnx)
+void comparevalues(char *s, double x, bn_t bnx)
 {
    int dec=40;
    char msg[100],msg1[100];
@@ -212,7 +212,7 @@ void comparevalues(char *s, LDBL x, bn_t bnx)
       goodbye();
 }
 /* compare a double and bignumber */
-void comparevaluesbf(char *s, LDBL x, bf_t bfx)
+void comparevaluesbf(char *s, double x, bf_t bfx)
 {
    int dec=40;
    char msg[300],msg1[300];
@@ -381,7 +381,7 @@ int near bnMANRbailout()
 
 int near bfMODbailout()
 {
-   LDBL doublemagnitude;
+   double doublemagnitude;
 
    square_bf(bftmpsqrx, bfnew.x);
    square_bf(bftmpsqry, bfnew.y);
@@ -397,7 +397,7 @@ int near bfMODbailout()
 
 int near bfREALbailout()
 {
-   LDBL doubletempsqrx;
+   double doubletempsqrx;
 
    square_bf(bftmpsqrx, bfnew.x);
    square_bf(bftmpsqry, bfnew.y);
@@ -412,7 +412,7 @@ int near bfREALbailout()
 
 int near bfIMAGbailout()
 {
-   LDBL doubletempsqry;
+   double doubletempsqry;
 
    square_bf(bftmpsqrx, bfnew.x);
    square_bf(bftmpsqry, bfnew.y);
@@ -426,7 +426,7 @@ int near bfIMAGbailout()
 
 int near bfORbailout()
 {
-   LDBL doubletempsqrx, doubletempsqry;
+   double doubletempsqrx, doubletempsqry;
 
    square_bf(bftmpsqrx, bfnew.x);
    square_bf(bftmpsqry, bfnew.y);
@@ -441,7 +441,7 @@ int near bfORbailout()
 
 int near bfANDbailout()
 {
-   LDBL doubletempsqrx, doubletempsqry;
+   double doubletempsqrx, doubletempsqry;
 
    square_bf(bftmpsqrx, bfnew.x);
    square_bf(bftmpsqry, bfnew.y);
@@ -456,7 +456,7 @@ int near bfANDbailout()
 
 int near bfMANHbailout()
 {
-   LDBL doubletempmag;
+   double doubletempmag;
 
    square_bf(bftmpsqrx, bfnew.x);
    square_bf(bftmpsqry, bfnew.y);
@@ -475,7 +475,7 @@ int near bfMANHbailout()
 
 int near bfMANRbailout()
 {
-   LDBL doubletempmag;
+   double doubletempmag;
 
    square_bf(bftmpsqrx, bfnew.x);
    square_bf(bftmpsqry, bfnew.y);

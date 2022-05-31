@@ -1,10 +1,3 @@
-
-#define STRICT
-
-#include <windows.h>
-#include <string.h>
-#include <stdlib.h>
-
 /*
         WINTEXT.C handles the character-based "prompt screens",
         using a 24x80 character-window driver that I wrote originally
@@ -87,6 +80,14 @@ long FAR PASCAL wintext_proc(HANDLE, UINT, WPARAM, LPARAM);
         but the application program hasn't officially closed the window yet.
 */
 
+#include <string.h>
+#include <stdlib.h>
+
+#define STRICT
+#include <windows.h>
+#include <windowsx.h>
+
+
 int far wintext_textmode = 0;
 int far wintext_AltF4hit = 0;
 
@@ -113,7 +114,6 @@ int far wintext_buffer_init;     /* zero if 'screen' is uninitialized */
 /* font information */
 
 HFONT far wintext_hFont;
-int far wintext_char_font;
 int far wintext_char_width;
 int far wintext_char_height;
 int far wintext_char_xchars;
@@ -127,7 +127,6 @@ int far wintext_cursor_y;
 int far wintext_cursor_type;
 int far wintext_cursor_owned;
 HBITMAP far wintext_bitmap[3];
-short far wintext_cursor_pattern[3][40];
 
 LPSTR wintext_title_text;         /* title-bar text */
 
@@ -202,6 +201,7 @@ BOOL wintext_initialize(HANDLE hInstance, HWND hWndParent, LPSTR titletext)
     HFONT hOldFont;
     TEXTMETRIC TextMetric;
     int i, j;
+    short wintext_cursor_pattern[40];
 
     wintext_hInstance = hInstance;
     wintext_title_text = titletext;
@@ -221,12 +221,11 @@ BOOL wintext_initialize(HANDLE hInstance, HWND hWndParent, LPSTR titletext)
     return_value = RegisterClass(&wc);
 
     /* set up the font characteristics */
-    wintext_char_font = OEM_FIXED_FONT;
-    wintext_hFont = GetStockObject(wintext_char_font);
+    wintext_hFont = GetStockFont(OEM_FIXED_FONT);
     hDC=GetDC(hWndParent);
-    hOldFont = SelectObject(hDC, wintext_hFont);
+    hOldFont = SelectFont(hDC, wintext_hFont);
     GetTextMetrics(hDC, &TextMetric);
-    SelectObject(hDC, hOldFont);
+    SelectFont(hDC, hOldFont);
     ReleaseDC(hWndParent, hDC);
     wintext_char_width  = TextMetric.tmMaxCharWidth;
     wintext_char_height = TextMetric.tmHeight;
@@ -243,19 +242,15 @@ BOOL wintext_initialize(HANDLE hInstance, HWND hWndParent, LPSTR titletext)
              + GetSystemMetrics(SM_CYCAPTION);
 
     /* set up the font and caret information */
-    for (i = 0; i < 3; i++)
-        for (j = 0; j < wintext_char_height; j++)
-            wintext_cursor_pattern[i][j] = 0;
-    for (j = wintext_char_height-2; j < wintext_char_height; j++)
-        wintext_cursor_pattern[1][j] = 0x00ff;
     for (j = 0; j < wintext_char_height; j++)
-        wintext_cursor_pattern[2][j] = 0x00ff;
-    wintext_bitmap[0] = CreateBitmap(8, wintext_char_height, 1, 1,
-        (LPSTR)wintext_cursor_pattern[0]);
-    wintext_bitmap[1] = CreateBitmap(8, wintext_char_height, 1, 1,
-        (LPSTR)wintext_cursor_pattern[1]);
-    wintext_bitmap[2] = CreateBitmap(8, wintext_char_height, 1, 1,
-        (LPSTR)wintext_cursor_pattern[2]);
+        wintext_cursor_pattern[j] = 0;
+    wintext_bitmap[0] = CreateBitmap(8, wintext_char_height, 1, 1, (LPSTR)wintext_cursor_pattern);
+    for (j = wintext_char_height-2; j < wintext_char_height; j++)
+        wintext_cursor_pattern[j] = 0x00ff;
+    wintext_bitmap[1] = CreateBitmap(8, wintext_char_height, 1, 1, (LPSTR)wintext_cursor_pattern);
+    for (j = 0; j < wintext_char_height; j++)
+        wintext_cursor_pattern[j] = 0x00ff;
+    wintext_bitmap[2] = CreateBitmap(8, wintext_char_height, 1, 1, (LPSTR)wintext_cursor_pattern);
 
     wintext_textmode = 1;
     wintext_AltF4hit = 0;
@@ -670,7 +665,7 @@ if (ymin < 0) ymin = 0;
 if (ymax >= wintext_char_ychars) ymax = wintext_char_ychars-1;
 
 hDC=GetDC(wintext_hWndCopy);
-SelectObject(hDC, wintext_hFont);
+SelectFont(hDC, wintext_hFont);
 SetBkMode(hDC, OPAQUE);
 SetTextAlign(hDC, TA_LEFT | TA_TOP);
 

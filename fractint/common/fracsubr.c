@@ -3,6 +3,8 @@ FRACSUBR.C contains subroutines which belong primarily to CALCFRAC.C and
 FRACTALS.C, i.e. which are non-fractal-specific fractal engine subroutines.
 */
 
+#include <mem.h>
+
 #ifndef USE_VARARGS
 #include <stdarg.h>
 #else
@@ -43,8 +45,6 @@ void set_grid_pointers()
 {
    dx0 = MK_FP(extraseg,0);
    dy1 = (dx1 = (dy0 = dx0 + xdots) + ydots) + ydots;
-   lx0 = (long far *) dx0;
-   ly1 = (lx1 = (ly0 = lx0 + xdots) + ydots) + ydots;
    set_pixel_calc_functions();
 }
 
@@ -63,26 +63,6 @@ void fill_dx_array(void)
       for (i = 1; i < ydots; i++ ) {
          dy0[i] = (double)(dy0[0] - i*delyy);
          dx1[i] = (double)(dx1[0] + i*delxx2);
-      }
-   }
-}
-void fill_lx_array(void)
-{
-   int i;
-   /* note that lx1 & ly1 values can overflow into sign bit; since     */
-   /* they're used only to add to lx0/ly0, 2s comp straightens it out  */
-   if(use_grid)
-   {
-      lx0[0] = xmin;               /* fill up the x, y grids */
-      ly0[0] = ymax;
-      lx1[0] = ly1[0] = 0;
-      for (i = 1; i < xdots; i++ ) {
-         lx0[i] = lx0[i-1] + delx;
-         ly1[i] = ly1[i-1] - dely2;
-      }
-      for (i = 1; i < ydots; i++ ) {
-         ly0[i] = ly0[i-1] - dely;
-         lx1[i] = lx1[i-1] + delx2;
       }
    }
 }
@@ -128,8 +108,8 @@ void calcfracinit(void) /* initialize a *pile* of stuff for fractal calculation 
   /* space req for grid is 2(xdots+ydots)*sizeof(long or double) */
   /* space available in extraseg is 65536 Bytes */
    xytemp = xdots + ydots;
-   if( ((usr_floatflag == 0) && (xytemp * sizeof(long) > 32768)) ||
-       ((usr_floatflag == 1) && (xytemp * sizeof(double) > 32768)) ||
+   if( ((usr_floatflag == 0) && (xytemp * sizeof(long) > 32768L)) ||
+       ((usr_floatflag == 1) && (xytemp * sizeof(double) > 32768L)) ||
          debugflag == 3800)
    {
       use_grid=0;
@@ -142,16 +122,7 @@ void calcfracinit(void) /* initialize a *pile* of stuff for fractal calculation 
 
    if(!(curfractalspecific->flags & BF_MATH))
    {
-      int tofloat;
-      if((tofloat=curfractalspecific->tofloat) == NOFRACTAL)
-         bf_math = 0;
-      else if(!(fractalspecific[tofloat].flags & BF_MATH))
-         bf_math = 0;
-      else if(bf_math)
-      {
-         curfractalspecific = &fractalspecific[tofloat];
-         fractype = tofloat;
-      }
+      bf_math = 0;
    }
 
    /* switch back to double when zooming out if using arbitrary precision */
@@ -166,28 +137,28 @@ void calcfracinit(void) /* initialize a *pile* of stuff for fractal calculation 
       else
          init_bf_dec(gotprec);
    }
-   else if((fractype==MANDEL || fractype==MANDELFP) && debugflag==3200)
+   else if((fractype==MANDELFP) && debugflag==3200)
    {
       fractype=MANDELFP;
       curfractalspecific = &fractalspecific[MANDELFP];
       fractal_floattobf();
       usr_floatflag = 1;
    }
-   else if((fractype==JULIA || fractype==JULIAFP) && debugflag==3200)
+   else if((fractype==JULIAFP) && debugflag==3200)
    {
       fractype=JULIAFP;
       curfractalspecific = &fractalspecific[JULIAFP];
       fractal_floattobf();
       usr_floatflag = 1;
    }
-   else if((fractype==LMANDELZPOWER || fractype==FPMANDELZPOWER) && debugflag==3200)
+   else if((fractype==FPMANDELZPOWER) && debugflag==3200)
    {
       fractype=FPMANDELZPOWER;
       curfractalspecific = &fractalspecific[FPMANDELZPOWER];
       fractal_floattobf();
       usr_floatflag = 1;
    }
-   else if((fractype==LJULIAZPOWER || fractype==FPJULIAZPOWER) && debugflag==3200)
+   else if((fractype==FPJULIAZPOWER) && debugflag==3200)
    {
       fractype=FPJULIAZPOWER;
       curfractalspecific = &fractalspecific[FPJULIAZPOWER];
@@ -214,10 +185,10 @@ void calcfracinit(void) /* initialize a *pile* of stuff for fractal calculation 
          floatflag = 1;
    }
    /* if floating pt only, set floatflag for TAB screen */
-   if (!curfractalspecific->isinteger && curfractalspecific->tofloat == NOFRACTAL)
+   if (!curfractalspecific->isinteger)
       floatflag = 1;
    if (usr_stdcalcmode == 's') {
-      if (fractype == MANDEL || fractype == MANDELFP)
+      if (fractype == MANDELFP)
          floatflag = 1;
       else
          usr_stdcalcmode = '1';
@@ -250,34 +221,6 @@ init_restart:
    if (distest)
       floatflag = 1;  /* force floating point for dist est */
 
-   if (floatflag) { /* ensure type matches floatflag */
-      if (curfractalspecific->isinteger != 0
-        && curfractalspecific->tofloat != NOFRACTAL)
-         fractype = curfractalspecific->tofloat;
-      }
-   else {
-      if (curfractalspecific->isinteger == 0
-        && curfractalspecific->tofloat != NOFRACTAL)
-         fractype = curfractalspecific->tofloat;
-      }
-   /* match Julibrot with integer mode of orbit */
-   if(fractype == JULIBROTFP && fractalspecific[neworbittype].isinteger)
-   {
-      int i;
-      if((i=fractalspecific[neworbittype].tofloat) != NOFRACTAL)
-         neworbittype = i;
-      else
-         fractype = JULIBROT;
-   }
-   else if(fractype == JULIBROT && fractalspecific[neworbittype].isinteger==0)
-   {
-      int i;
-      if((i=fractalspecific[neworbittype].tofloat) != NOFRACTAL)
-         neworbittype = i;
-      else
-         fractype = JULIBROTFP;
-   }
-
    curfractalspecific = &fractalspecific[fractype];
 
    integerfractal = curfractalspecific->isinteger;
@@ -294,8 +237,6 @@ init_restart:
       rqlim = 100;
    else
       rqlim = curfractalspecific->orbit_bailout;
-   if (integerfractal) /* the bailout limit mustn't be too high here */
-      if (rqlim > 127.0) rqlim = 127.0;
 
    if ((curfractalspecific->flags&NOROTATE) != 0) {
       /* ensure min<max and unrotated rectangle */
@@ -305,32 +246,7 @@ init_restart:
       }
 
    /* set up bitshift for integer math */
-   bitshift = FUDGEFACTOR2; /* by default, the smaller shift */
-   if (integerfractal > 1)  /* use specific override from table */
-      bitshift = integerfractal;
-   if (integerfractal == 0) { /* float? */
-      if ((i = curfractalspecific->tofloat) != NOFRACTAL) /* -> int? */
-      {
-         if (fractalspecific[i].isinteger > 1) /* specific shift? */
-            bitshift = fractalspecific[i].isinteger;
-      }
-      else
-         bitshift = 16;  /* to allow larger corners */
-   }
-/* We want this code if we're using the assembler calcmand */
-   if (fractype == MANDEL || fractype == JULIA) { /* adust shift bits if.. */
-      if (potflag == 0                            /* not using potential */
-        && (param[0] > -2.0 && param[0] < 2.0)  /* parameters not too large */
-        && (param[1] > -2.0 && param[1] < 2.0)
-        && !invert                                /* and not inverting */
-        && biomorph == -1                         /* and not biomorphing */
-        && rqlim <= 4.0                           /* and bailout not too high */
-        && (outside > -2 || outside < -6)         /* and no funny outside stuff */
-        && debugflag != 1234                      /* and not debugging */
-        && closeprox <= 2.0                       /* and closeprox not too large */
-        && bailoutest == Mod)                     /* and bailout test = mod */
-         bitshift = FUDGEFACTOR;                  /* use the larger bitshift */
-      }
+   bitshift = 16;  /* to allow larger corners */
 
    fudge = 1L << bitshift;
 
@@ -343,10 +259,10 @@ init_restart:
    else
    {
       adjust_to_limits(1.0); /* make sure all corners in valid range */
-      delxx  = (LDBL)(xxmax - xx3rd) / (LDBL)dxsize; /* calculate stepsizes */
-      delyy  = (LDBL)(yymax - yy3rd) / (LDBL)dysize;
-      delxx2 = (LDBL)(xx3rd - xxmin) / (LDBL)dysize;
-      delyy2 = (LDBL)(yy3rd - yymin) / (LDBL)dxsize;
+      delxx  = (double)(xxmax - xx3rd) / (double)dxsize; /* calculate stepsizes */
+      delyy  = (double)(yymax - yy3rd) / (double)dysize;
+      delxx2 = (double)(xx3rd - xxmin) / (double)dysize;
+      delyy2 = (double)(yy3rd - yymin) / (double)dxsize;
       fill_dx_array();
    }
 
@@ -373,48 +289,8 @@ init_restart:
    if (fractype != PLASMA && bf_math == 0
        && fractype != IFS && fractype != IFS3D && fractype != LSYSTEM)
    {
-      if (integerfractal && !invert && use_grid)
-      {
-         if (   (delx  == 0 && delxx  != 0.0)
-             || (delx2 == 0 && delxx2 != 0.0)
-             || (dely  == 0 && delyy  != 0.0)
-             || (dely2 == 0 && delyy2 != 0.0) )
-            goto expand_retry;
-
-         fill_lx_array();   /* fill up the x,y grids */
-         /* past max res?  check corners within 10% of expected */
-         if (   ratio_bad((double)lx0[xdots-1]-xmin,(double)xmax-x3rd)
-             || ratio_bad((double)ly0[ydots-1]-ymax,(double)y3rd-ymax)
-             || ratio_bad((double)lx1[(ydots>>1)-1],((double)x3rd-xmin)/2)
-             || ratio_bad((double)ly1[(xdots>>1)-1],((double)ymin-y3rd)/2) )
-         {
-expand_retry:
-            if (integerfractal          /* integer fractal type? */
-               && curfractalspecific->tofloat != NOFRACTAL)
-               floatflag = 1;           /* switch to floating pt */
-            else
-               adjust_to_limits(2.0);   /* double the size */
-            if (calc_status == 2)       /* due to restore of an old file? */
-               calc_status = 0;         /*   whatever, it isn't resumable */
-            goto init_restart;
-         } /* end if ratio bad */
-
-         /* re-set corners to match reality */
-         xmax = lx0[xdots-1] + lx1[ydots-1];
-         ymin = ly0[ydots-1] + ly1[xdots-1];
-         x3rd = xmin + lx1[ydots-1];
-         y3rd = ly0[ydots-1];
-         xxmin = fudgetodouble(xmin);
-         xxmax = fudgetodouble(xmax);
-         xx3rd = fudgetodouble(x3rd);
-         yymin = fudgetodouble(ymin);
-         yymax = fudgetodouble(ymax);
-         yy3rd = fudgetodouble(y3rd);
-      } /* end if (integerfractal && !invert && use_grid) */
-      else
-      {
          double dx0,dy0,dx1,dy1;
-         /* set up dx0 and dy0 analogs of lx0 and ly0 */
+         /* set up dx0 and dy0 */
          /* put fractal parameters in doubles */
          dx0 = xxmin;                /* fill up the x, y grids */
          dy0 = yymax;
@@ -479,7 +355,10 @@ expand_retry:
                   fractal_floattobf();
                   goto init_restart;
                }
-               goto expand_retry;
+               adjust_to_limits(2.0);      /* double the size */
+               if (calc_status == 2)       /* due to restore of an old file? */
+                  calc_status = 0;         /*   whatever, it isn't resumable */
+               goto init_restart;
             } /* end if ratio_bad etc. */
             } /* end if tries < 2 */
          } /* end if bf_math == 0 */
@@ -493,7 +372,6 @@ expand_retry:
          xx3rd = (double)(xxmin + (ydots-1)*delxx2);
          yy3rd = (double)(yymax - (ydots-1)*delyy);
 
-      } /* end else */
    } /* end if not plasma */
 
    /* for periodicity close-enough, and for unity: */
@@ -529,7 +407,7 @@ expand_retry:
       /* in production version this code can be deleted */
       char far *extra;
       extra = (char far *)MK_FP(extraseg,0);
-      far_memset(extra,0,(unsigned int)(0x10000l-(bflength+2)*22U));
+      _fmemset(extra, 0, 0x10000L-(bflength+2)*22);
    }
 }
 
@@ -565,7 +443,7 @@ void adjust_cornerbf(void)
    /* to avoid problems when delta per axis makes too large a ratio     */
    double ftemp;
    double Xmagfactor, Rotation, Skew;
-   LDBL Magnification;
+   double Magnification;
 
    bf_t bftemp, bftemp2;
    bf_t btmp1;
@@ -638,19 +516,16 @@ void adjust_corner(void)
    /* to avoid problems when delta per axis makes too large a ratio     */
    double ftemp,ftemp2;
    double Xctr, Yctr, Xmagfactor, Rotation, Skew;
-   LDBL Magnification;
+   double Magnification;
 
-   if(!integerfractal)
-      {
       /* While we're at it, let's adjust the Xmagfactor as well */
-      cvtcentermag(&Xctr, &Yctr, &Magnification, &Xmagfactor, &Rotation, &Skew);
-      ftemp = fabs(Xmagfactor);
-      if (ftemp != 1 && ftemp >= (1-aspectdrift) && ftemp <= (1+aspectdrift))
-         {
-         Xmagfactor = sign(Xmagfactor);
-         cvtcorners(Xctr, Yctr, Magnification, Xmagfactor, Rotation, Skew);
-         }
-      }
+   cvtcentermag(&Xctr, &Yctr, &Magnification, &Xmagfactor, &Rotation, &Skew);
+   ftemp = fabs(Xmagfactor);
+   if (ftemp != 1 && ftemp >= (1-aspectdrift) && ftemp <= (1+aspectdrift))
+   {
+      Xmagfactor = sign(Xmagfactor);
+      cvtcorners(Xctr, Yctr, Magnification, Xmagfactor, Rotation, Skew);
+   }
 
    if( (ftemp=fabs(xx3rd-xxmin)) < (ftemp2=fabs(xxmax-xx3rd)) ) {
       if (ftemp*10000 < ftemp2 && yy3rd != yymax)
@@ -672,7 +547,7 @@ void adjust_corner(void)
 
 static void _fastcall adjust_to_limitsbf(double expand)
 {
-   LDBL limit;
+   double limit;
    bf_t bcornerx[4],bcornery[4];
    bf_t blowx,bhighx,blowy,bhighy,blimit,bftemp;
    bf_t bcenterx,bcentery,badjx,badjy,btmp1,btmp2;
@@ -888,13 +763,6 @@ static void _fastcall adjust_to_limits(double expand)
 
    limit = 32767.99;
 
-   if (integerfractal) {
-      if (save_release > 1940) /* let user reproduce old GIF's and PAR's */
-         limit = 1023.99;
-      if (bitshift >= 24) limit = 31.99;
-      if (bitshift >= 29) limit = 3.99;
-   }
-
    centerx = (xxmin+xxmax)/2;
    centery = (yymin+yymax)/2;
 
@@ -1000,10 +868,8 @@ static void _fastcall smallest_add_bf(bf_t num)
 static int _fastcall ratio_bad(double actual, double desired)
 {
    double ftemp, tol;
-   if(integerfractal)
-      tol = math_tol[0];
-   else
-      tol = math_tol[1];
+
+   tol = math_tol[1];
    if(tol <= 0.0)
       return(1);
    else if(tol >= 1.0)
@@ -1189,12 +1055,12 @@ void end_resume(void)
        Xs == xxmax-xx3rd               Ys == yy3rd-yymax
        W  == xdots-1                   D  == ydots-1
    We know that:
-       realx == lx0[col] + lx1[row]
-       realy == ly0[row] + ly1[col]
-       lx0[col] == (col/width) * Xs + xxmin
-       lx1[row] == row * delxx
-       ly0[row] == (row/D) * Ys + yymax
-       ly1[col] == col * (0-delyy)
+       realx == dx0[col] + dx1[row]
+       realy == dy0[row] + dy1[col]
+       dx0[col] == (col/width) * Xs + xxmin
+       dx1[row] == row * delxx
+       dy0[row] == (row/D) * Ys + yymax
+       dy1[col] == col * (0-delyy)
   so:
        realx == (col/W) * Xs + xxmin + row * delxx
        realy == (row/D) * Ys + yymax + col * (0-delyy)
@@ -1556,7 +1422,6 @@ void tidy_worklist(void) /* combine mergeable entries, resort */
 
 void get_julia_attractor (double real, double imag)
 {
-   _LCMPLX lresult;
    _CMPLX result;
    int savper;
    long savmaxit;
@@ -1576,16 +1441,6 @@ void get_julia_attractor (double real, double imag)
    tempsqrx = sqr(old.x);
    tempsqry = sqr(old.y);
 
-   lold.x = (long)real;     /* prepare for int orbit calc */
-   lold.y = (long)imag;
-   ltempsqrx = (long)tempsqrx;
-   ltempsqry = (long)tempsqry;
-
-   lold.x = lold.x << bitshift;
-   lold.y = lold.y << bitshift;
-   ltempsqrx = ltempsqrx << bitshift;
-   ltempsqry = ltempsqry << bitshift;
-
    if (maxit < 500)         /* we're going to try at least this hard */
       maxit = 500;
    coloriter = 0;
@@ -1595,35 +1450,18 @@ void get_julia_attractor (double real, double imag)
          break;
    if (coloriter >= maxit)      /* if orbit stays in the lake */
    {
-      if (integerfractal)   /* remember where it went to */
-         lresult = lnew;
-      else
-         result =  new;
+     result =  new;
      for (i=0;i<10;i++) {
       overflow = 0;
       if(!curfractalspecific->orbitcalc() && !overflow) /* if it stays in the lake */
       {                        /* and doesn't move far, probably */
-         if (integerfractal)   /*   found a finite attractor    */
+         if(fabs(result.x-new.x) < closenuff
+             && fabs(result.y-new.y) < closenuff)
          {
-            if(labs(lresult.x-lnew.x) < lclosenuff
-                && labs(lresult.y-lnew.y) < lclosenuff)
-            {
-               lattr[attractors] = lnew;
-               attrperiod[attractors] = i+1;
-               attractors++;   /* another attractor - coloured lakes ! */
-               break;
-            }
-         }
-         else
-         {
-            if(fabsl(result.x-new.x) < closenuff
-                && fabsl(result.y-new.y) < closenuff)
-            {
-               attr[attractors] = new;
-               attrperiod[attractors] = i+1;
-               attractors++;   /* another attractor - coloured lakes ! */
-               break;
-            }
+            attr[attractors] = new;
+            attrperiod[attractors] = i+1;
+            attractors++;   /* another attractor - coloured lakes ! */
+            break;
          }
       } else {
           break;

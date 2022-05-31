@@ -448,7 +448,7 @@ long bntoint(bn_t n)
 /*********************************************************************/
 /*  b = f                                                            */
 /*  Converts a double to a bignumber                                 */
-bn_t floattobn(bn_t r, LDBL f)
+bn_t floattobn(bn_t r, double f)
     {
 #ifndef USE_BIGNUM_C_CODE
     /* Only use this when using the ASM code as the C version of  */
@@ -533,7 +533,7 @@ bn_t unsafe_inv_bn(bn_t r, bn_t n)
     {
     int signflag=0, i;
     long maxval;
-    LDBL f;
+    double f;
     bn_t orig_r, orig_n; /* orig_bntmp1 not needed here */
     int  orig_bnlength,
          orig_padding,
@@ -641,7 +641,7 @@ bn_t unsafe_div_bn(bn_t r, bn_t n1, bn_t n2)
     {
     int scale1, scale2, scale, sign=0, i;
     long maxval;
-    LDBL a, b, f;
+    double a, b, f;
 
     /* first, check for valid data */
     a = bntofloat(n1);
@@ -741,7 +741,7 @@ bn_t unsafe_div_bn(bn_t r, bn_t n1, bn_t n2)
 bn_t sqrt_bn(bn_t r, bn_t n)
     {
     int i, comp, almost_match=0;
-    LDBL f;
+    double f;
     bn_t orig_r, orig_n;
     int  orig_bnlength,
          orig_padding,
@@ -762,7 +762,7 @@ bn_t sqrt_bn(bn_t r, bn_t n)
         clear_bn(r); /* sqrt(0) = 0 */
         return r;
         }
-    f = sqrtl(f); /* approximate square root */
+    f = sqrt(f); /* approximate square root */
     /* no need to check overflow */
 
     /* With Newton's Method, there is no need to calculate all the digits */
@@ -863,7 +863,7 @@ bn_t unsafe_ln_bn(bn_t r, bn_t n)
     {
     int i, comp, almost_match=0;
     long maxval;
-    LDBL f;
+    double f;
     bn_t orig_r, orig_n, orig_bntmp5, orig_bntmp4;
     int  orig_bnlength,
          orig_padding,
@@ -880,7 +880,7 @@ bn_t unsafe_ln_bn(bn_t r, bn_t n)
         }
 
     f = bntofloat(n);
-    f = logl(f); /* approximate ln(x) */
+    f = log(f); /* approximate ln(x) */
     maxval = (1L << ((intlength<<3)-1)) - 1;
     if (f > maxval) /* check for overflow */
         {
@@ -1116,7 +1116,7 @@ bn_t unsafe_sincos_bn(bn_t s, bn_t c, bn_t n)
 bn_t unsafe_atan_bn(bn_t r, bn_t n)
     {
     int i, comp, almost_match=0, signflag=0;
-    LDBL f;
+    double f;
     bn_t orig_r, orig_n, orig_bn_pi, orig_bntmp3;
     int  orig_bnlength,
          orig_padding,
@@ -1132,7 +1132,7 @@ bn_t unsafe_atan_bn(bn_t r, bn_t n)
         neg_a_bn(n);
         }
 
-/* If n is very large, atanl() won't give enough decimal places to be a */
+/* If n is very large, atan() won't give enough decimal places to be a */
 /* good enough initial guess for Newton's Method.  If it is larger than */
 /* say, 1, atan(n) = pi/2 - acot(n) = pi/2 - atan(1/n).                 */
 
@@ -1171,7 +1171,7 @@ bn_t unsafe_atan_bn(bn_t r, bn_t n)
     bn_pi = orig_bn_pi + orig_bnlength - bnlength;
     bntmp3 = orig_bntmp3 + orig_bnlength - bnlength;
 
-    f = atanl(f); /* approximate arctangent */
+    f = atan(f); /* approximate arctangent */
     /* no need to check overflow */
 
     floattobn(r, f); /* start with approximate atan */

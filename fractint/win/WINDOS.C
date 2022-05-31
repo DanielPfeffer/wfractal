@@ -3,18 +3,10 @@
         Fractint for DOS
 */
 
-#define STRICT
-
-#include "port.h"
-#include "prototyp.h"
-
-#include <windows.h>
 #include <string.h>
 #include <time.h>
-#include <drivinit.h>
 
-#include "winfract.h"
-#include "mathtool.h"
+#include <mem.h>
 
 #ifndef USE_VARARGS
 #include <stdarg.h>
@@ -22,16 +14,17 @@
 #include <varargs.h>
 #endif
 
-#ifndef TIMERINFO
-                                /* define TIMERINFO stuff, if needs be */
-typedef struct tagTIMERINFO {
-    DWORD dwSize;
-    DWORD dwmsSinceStart;
-    DWORD dwmsThisVM;
-    } TIMERINFO;
+#include "port.h"
+#include "prototyp.h"
 
-BOOL    far pascal TimerCount(TIMERINFO FAR *);
-#endif
+#define STRICT
+#include <windows.h>
+#include <windowsx.h>
+#include <toolhelp.h>
+//#include <drivinit.h>
+
+#include "winfract.h"
+#include "mathtool.h"
 
 int stopmsg(int , char far *);
 int  farread(int, VOIDFARPTR, unsigned);
@@ -501,59 +494,15 @@ MessageBeep(0);
 }
 
 
-#define MAXFARMEMALLOCS  50                /* max active farmemallocs */
-int   farmemallocinit = 0;                /* any memory been allocated yet?   */
-HANDLE farmemallochandles[MAXFARMEMALLOCS];                        /* handles  */
-void far *farmemallocpointers[MAXFARMEMALLOCS]; /* pointers */
-
-void far * cdecl farmemalloc(long bytecount)
+void far* farmemalloc(long bytecount)
 {
-int i;
-HANDLE temphandle;
-void far *temppointer;
-
-if (!farmemallocinit) {         /* never been here yet - initialize */
-    farmemallocinit = 1;
-    for (i = 0; i < MAXFARMEMALLOCS; i++) {
-        farmemallochandles[i] = (HANDLE)0;
-        farmemallocpointers[i] = NULL;
-        }
-    }
-
-for (i = 0; i < MAXFARMEMALLOCS; i++)  /* look for a free handle */
-    if (farmemallochandles[i] == (HANDLE)0) break;
-
-if (i == MAXFARMEMALLOCS)        /* uh-oh - no more handles */
-   return(NULL);                /* can't get far memory this way */
-
-if (!(temphandle = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, bytecount)))
-     return(NULL);                /* can't allocate the memory */
-
-if ((temppointer = (void far *)GlobalLock(temphandle)) == NULL) {
-     GlobalFree(temphandle);
-     return(NULL);                /* ?? can't lock the memory ?? */
-     }
-
-farmemallochandles[i] =  temphandle;
-farmemallocpointers[i] = temppointer;
-return(temppointer);
+    return GlobalAllocPtr(GPTR, bytecount);
 }
 
-void farmemfree(void far *bytepointer)
+void farmemfree(void far* bytepointer)
 {
-int i;
-
-if (bytepointer == (void far *)NULL) return;
-
-for (i = 0; i < MAXFARMEMALLOCS; i++)        /* search for a matching pointer */
-    if (farmemallocpointers[i] == bytepointer)
-         break;
-if (i < MAXFARMEMALLOCS) {                /* got one */
-    GlobalUnlock(farmemallochandles[i]);
-    GlobalFree(farmemallochandles[i]);
-    farmemallochandles[i] = (HANDLE)0;
-    }
-
+    if (bytepointer)
+        GlobalFreePtr(bytepointer);
 }
 
 void debugmessage(char *msg1, char *msg2)
@@ -988,74 +937,27 @@ void winfract_help(void)
         WinHelp(wintext_hWndCopy,szHelpFileName,HELP_INDEX,0L);
 }
 
-int far_strlen(char far *string) {
-int i;
-for (i = 0; ; i++)
-    if (string[i] == 0)
-        return(i);
-}
-
-int far_strnicmp(char far *string1, char far *string2, int maxlen) {
-int i;
-unsigned char j, k;
-for (i = 0;i < maxlen ; i++) {
-    j = string1[i];
-    k = string2[i];
-    if (j >= 'a' && j <= 'z') j -= ('a' - 'A');
-    if (k >= 'a' && k <= 'z') k -= ('a' - 'A');
-    if (j-k != 0)
-        return(j-k);
-    }
-return(0);
-}
-
-void far_memcpy(void far *string1, void far *string2, int maxlen) {
-int i;
-for (i = 0;i < maxlen ; i++)
-    ((char far *)string1)[i] = ((char far *)string2)[i];
-}
-
-int far_memcmp(void far *string1, void far *string2, int maxlen) {
-int i;
-unsigned char j, k;
-for (i = 0;i < maxlen ; i++) {
-    j = ((char far *)string1)[i];
-    k = ((char far *)string2)[i];
-    if (j-k != 0)
-        return(j-k);
-    }
-return(0);
-}
-
-void far_memset(void far *string1, int char2, int maxlen) {
-int i;
-for (i = 0;i < maxlen ; i++)
-    ((char far *)string1)[i] = char2;
-}
-
-/*
-; *************** Far string/memory functions *********
-*/
-
-void far_strcpy(char far *to, char far *from)
+int _fstrnicmp(char const far* string1, char const far* string2, size_t maxlen)
 {
-   _fstrcpy(to, from);
+   int i;
+   char const far* s1 = string1;
+   char const far* s2 = string2;
+
+   while (maxlen--)
+   {
+      char c1 = toupper(*s1);
+      char c2 = toupper(*s2);
+      if (c1 < c2)
+          return -1;
+      if (c1 > c2)
+          return 1;
+      ++s1;
+      ++s2;
+   }
+
+   return 0;				// equal to end, or to maxlen
 }
 
-int far_strcmp (char far *a, char far *b)
-{
-   return _fstrcmp(a,b);
-}
-
-int far_stricmp(char far *a, char far *b)
-{
-   return _fstricmp(a,b);
-}
-
-void far_strcat (char far *a, char far *b)
-{
-   _fstrcat(a,b);
-}
 
 long timer_start,timer_interval;        /* timer(...) start & total */
 extern int  timerflag;
@@ -1210,3 +1112,4 @@ int check_vidmode_key(int dummy1, int dummy2)
     videotable[0].ydots = ydots;
     return 0;  /* yeah, sure - that's a good key. */
 }
+

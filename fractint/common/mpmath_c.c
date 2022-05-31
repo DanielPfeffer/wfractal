@@ -22,175 +22,15 @@
 #include "port.h"
 #include "prototyp.h"
 
-#ifndef XFRACT
-#if (_MSC_VER >= 700)
-#pragma code_seg ("mpmath1_text")     /* place following in an overlay */
-#endif
-
-struct MP *MPsub(struct MP x, struct MP y) {
-   y.Exp ^= 0x8000;
-   return(MPadd(x, y));
-}
-
-/* added by TW */
-struct MP *MPsub086(struct MP x, struct MP y) {
-   y.Exp ^= 0x8000;
-   return(MPadd086(x, y));
-}
-
-/* added by TW */
-struct MP *MPsub386(struct MP x, struct MP y) {
-   y.Exp ^= 0x8000;
-   return(MPadd386(x, y));
-}
-
-struct MP *MPabs(struct MP x) {
-   Ans = x;
-   Ans.Exp &= 0x7fff;
-   return(&Ans);
-}
-
-struct MPC MPCsqr(struct MPC x) {
-   struct MPC z;
-
-        z.x = *pMPsub(*pMPmul(x.x, x.x), *pMPmul(x.y, x.y));
-        z.y = *pMPmul(x.x, x.y);
-        z.y.Exp++;
-   return(z);
-}
-
-struct MP MPCmod(struct MPC x) {
-        return(*pMPadd(*pMPmul(x.x, x.x), *pMPmul(x.y, x.y)));
-}
-
-struct MPC MPCmul(struct MPC x, struct MPC y) {
-   struct MPC z;
-
-        z.x = *pMPsub(*pMPmul(x.x, y.x), *pMPmul(x.y, y.y));
-        z.y = *pMPadd(*pMPmul(x.x, y.y), *pMPmul(x.y, y.x));
-   return(z);
-}
-
-struct MPC MPCdiv(struct MPC x, struct MPC y) {
-   struct MP mod;
-
-   mod = MPCmod(y);
-        y.y.Exp ^= 0x8000;
-        y.x = *pMPdiv(y.x, mod);
-        y.y = *pMPdiv(y.y, mod);
-   return(MPCmul(x, y));
-}
-
-struct MPC MPCadd(struct MPC x, struct MPC y) {
-   struct MPC z;
-
-        z.x = *pMPadd(x.x, y.x);
-        z.y = *pMPadd(x.y, y.y);
-   return(z);
-}
-
-struct MPC MPCsub(struct MPC x, struct MPC y) {
-   struct MPC z;
-
-        z.x = *pMPsub(x.x, y.x);
-        z.y = *pMPsub(x.y, y.y);
-   return(z);
-}
-
-struct MPC MPCone = { {0x3fff, 0x80000000l},
-                      {0, 0l}
-                    };
-
-struct MPC MPCpow(struct MPC x, int exp) {
-   struct MPC z;
-   struct MPC zz;
-
-   if(exp & 1)
-      z = x;
-   else
-      z = MPCone;
-   exp >>= 1;
-   while(exp) {
-                zz.x = *pMPsub(*pMPmul(x.x, x.x), *pMPmul(x.y, x.y));
-                zz.y = *pMPmul(x.x, x.y);
-                zz.y.Exp++;
-      x = zz;
-      if(exp & 1) {
-                        zz.x = *pMPsub(*pMPmul(z.x, x.x), *pMPmul(z.y, x.y));
-                        zz.y = *pMPadd(*pMPmul(z.x, x.y), *pMPmul(z.y, x.x));
-         z = zz;
-      }
-      exp >>= 1;
-   }
-   return(z);
-}
-
-int MPCcmp(struct MPC x, struct MPC y) {
-   struct MPC z;
-
-        if(pMPcmp(x.x, y.x) || pMPcmp(x.y, y.y)) {
-                z.x = MPCmod(x);
-                z.y = MPCmod(y);
-                return(pMPcmp(z.x, z.y));
-   }
-   else
-      return(0);
-}
-
-_CMPLX MPC2cmplx(struct MPC x) {
-   _CMPLX z;
-
-        z.x = *pMP2d(x.x);
-        z.y = *pMP2d(x.y);
-   return(z);
-}
-
-struct MPC cmplx2MPC(_CMPLX z) {
-   struct MPC x;
-
-        x.x = *pd2MP(z.x);
-        x.y = *pd2MP(z.y);
-   return(x);
-}
-
-/* function pointer versions added by Tim Wegner 12/07/89 */
-/* int        (*ppMPcmp)() = MPcmp086; */
-int        (*pMPcmp)(struct MP x, struct MP y) = MPcmp086;
-struct MP  *(*pMPmul)(struct MP x, struct MP y)= MPmul086;
-struct MP  *(*pMPdiv)(struct MP x, struct MP y)= MPdiv086;
-struct MP  *(*pMPadd)(struct MP x, struct MP y)= MPadd086;
-struct MP  *(*pMPsub)(struct MP x, struct MP y)= MPsub086;
-struct MP  *(*pd2MP)(double x)                 = d2MP086 ;
-double *(*pMP2d)(struct MP m)                  = MP2d086 ;
-/* struct MP  *(*pfg2MP)(long x, int fg)          = fg2MP086; */
-
-void setMPfunctions(void)
-{
-    pMPmul = MPmul086;
-    pMPdiv = MPdiv086;
-    pMPadd = MPadd086;
-    pMPsub = MPsub086;
-    pMPcmp = MPcmp086;
-    pd2MP  = d2MP086 ;
-    pMP2d  = MP2d086 ;
-}
-#if (_MSC_VER >= 700)
-#pragma code_seg ()       /* back to normal segment */
-#endif
-#endif /* XFRACT */
-
 #ifndef sqr
 #define sqr(x) ((x)*(x))
 #endif
 
-_CMPLX ComplexPower(_CMPLX xx, _CMPLX yy) {
+_CMPLX ComplexPower(_CMPLX xx, _CMPLX yy)
+{
    _CMPLX z, cLog, t;
-   LDBL e2x;
-#ifndef XFRACT
+   double e2x;
    double siny, cosy;
-#else
-   LDBL siny, cosy;
-#endif
 
    /* fixes power bug - if any complaints, backwards compatibility hook
       goes here TIW 3/95 */
@@ -220,11 +60,11 @@ _CMPLX ComplexPower(_CMPLX xx, _CMPLX yy) {
    if(t.x < -690)
       e2x = 0.0;
    else
-      e2x = expl(t.x);
+      e2x = exp(t.x);
    FPUsincos(&t.y, &siny, &cosy);
-   z.x = (double) (e2x * cosy);
-   z.y = (double) (e2x * siny);
-   return(z);
+   z.x = e2x * cosy;
+   z.y = e2x * siny;
+   return z;
 }
 
 /*
@@ -234,15 +74,6 @@ _CMPLX ComplexPower(_CMPLX xx, _CMPLX yy) {
 */
 
 #define Sqrtz(z,rz) (*(rz) = ComplexSqrtFloat((z).x, (z).y))
-
-#ifndef XFRACT
-#define asinl           asin
-#define atanl           atan
-#define atan2l          atan2
-#define fabsl           fabs
-#define logl            log
-#define sqrtl           sqrt
-#endif
 
 /* rz=Arcsin(z)=-i*Log{i*z+sqrt(1-z*z)} */
 void Arcsinz(_CMPLX z,_CMPLX *rz)
@@ -304,15 +135,15 @@ void Arctanhz(_CMPLX z,_CMPLX *rz)
 
   if( z.x == 0.0){
     rz->x = 0.0;
-    rz->y = atanl( z.y);
+    rz->y = atan( z.y);
     return;
   }
   else{
-    if( fabsl(z.x) == 1.0 && z.y == 0.0){
+    if( fabs(z.x) == 1.0 && z.y == 0.0){
       return;
     }
-    else if( fabsl( z.x) < 1.0 && z.y == 0.0){
-      rz->x = logl((1.0+z.x)/(1.0-z.x))/2.0;
+    else if( fabs( z.x) < 1.0 && z.y == 0.0){
+      rz->x = log((1.0+z.x)/(1.0-z.x))/2.0;
       rz->y = 0.0;
       return;
     }
@@ -334,7 +165,7 @@ void Arctanz(_CMPLX z,_CMPLX *rz)
   if( z.x == 0.0 && z.y == 0.0)
     rz->x = rz->y = 0.0;
   else if( z.x != 0.0 && z.y == 0.0){
-    rz->x = atanl( z.x);
+    rz->x = atan( z.x);
     rz->y = 0.0;
   }
   else if( z.x == 0.0 && z.y != 0.0){
@@ -403,54 +234,27 @@ long lsqrt(long f)
         return y0 >> -N;
 }
 #endif
-LCMPLX ComplexSqrtLong(long x, long y)
-{
-   double    mag, theta;
-   long      maglong, thetalong;
-   LCMPLX    result;
 
-#ifndef LONGSQRT
-   mag       = sqrt(sqrt(((double) multiply(x,x,bitshift))/fudge +
-                         ((double) multiply(y,y,bitshift))/ fudge));
-   maglong   = (long)(mag * fudge);
-#else
-   maglong   = lsqrt(lsqrt(multiply(x,x,bitshift)+multiply(y,y,bitshift)));
-#endif
-   theta     = atan2((double) y/fudge, (double) x/fudge)/2;
-   thetalong = (long)(theta * SinCosFudge);
-   SinCos086(thetalong, &result.y, &result.x);
-   result.x  = multiply(result.x << (bitshift - 16), maglong, bitshift);
-   result.y  = multiply(result.y << (bitshift - 16), maglong, bitshift);
-   return result;
-}
-
-#ifndef XFRACT
 _CMPLX ComplexSqrtFloat(double x, double y)
 {
-   double mag;
-   double theta;
-#else
-_CMPLX ComplexSqrtFloat(LDBL x, LDBL y)
-{
-   LDBL mag;
-   LDBL theta;
-#endif
-   _CMPLX  result;
+   _CMPLX result;
 
    if(x == 0.0 && y == 0.0)
       result.x = result.y = 0.0;
-   else if (y == 0.0 && x > 0.0) { /* number is real and not negative */
-      result.x = sqrtl(x);
+   else if (y == 0.0 && x > 0.0)
+   { /* number is real and not negative */
+      result.x = sqrt(x);
       result.y = 0.0;
    }
    else
    {
-      mag   = sqrtl(sqrtl(x*x + y*y));
-      theta = atan2l(y, x) / 2.0;
+      double mag = sqrt(hypot(x, y));
+      double theta = atan2(y, x) / 2.0;
       FPUsincos(&theta, &result.y, &result.x);
       result.x *= mag;
       result.y *= mag;
    }
+
    return result;
 }
 
@@ -595,13 +399,9 @@ long far ExpFloat14(long xx) {
    return(RegFg2Float(Ans, (char)f));
 }
 
-#ifndef XFRACT
-double TwoPi;
-#else
-LDBL TwoPi;
-#endif
-_CMPLX temp, BaseLog;
-_CMPLX cdegree = { 3.0, 0.0 }, croot   = { 1.0, 0.0 };
+static double TwoPi;
+static _CMPLX temp, BaseLog;
+static _CMPLX cdegree = { 3.0, 0.0 }, croot   = { 1.0, 0.0 };
 
 int ComplexNewtonSetup(void) {
    threshold = .001;
@@ -667,13 +467,13 @@ int ComplexBasin(void) {
    tmp.x = new.x - croot.x;
    tmp.y = new.y - croot.y;
    if((sqr(tmp.x) + sqr(tmp.y)) < threshold) {
-      if(fabsl(old.y) < .01)
+      if(fabs(old.y) < .01)
          old.y = 0.0;
       FPUcplxlog(&old, &temp);
       FPUcplxmul(&temp, &cdegree, &tmp);
       mod = tmp.y/TwoPi;
       coloriter = (long)mod;
-      if(fabsl(mod - coloriter) > 0.5) {
+      if(fabs(mod - coloriter) > 0.5) {
          if(mod < 0.0)
             coloriter--;
          else

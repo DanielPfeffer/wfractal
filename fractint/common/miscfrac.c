@@ -12,10 +12,6 @@ Miscellaneous fractal-specific code (formerly in CALCFRAC.C)
 #include "fractype.h"
 #include "targa_lc.h"
 
-#ifndef XFRACT
-#define LDBL            double
-#endif
-
 /* routines in this module      */
 
 static void set_Plasma_palette(void);
@@ -508,7 +504,7 @@ int diffusion()
    int colorcount,currentcolor;
   
    int i;
-   LDBL cosine,sine,angle;
+   double cosine,sine,angle;
    int x,y;
    float r, radius;
 
@@ -594,7 +590,7 @@ int diffusion()
    {
       switch (mode) {
       case 0: /* Release new point on a circle inside the box */
-               angle=2*(LDBL)rand()/(RAND_MAX/PI);
+               angle=2*(double)rand()/(RAND_MAX/PI);
                FPUsincos(&angle,&sine,&cosine);
                x = (int)(cosine*(xmax-xmin) + xdots);
                y = (int)(sine  *(ymax-ymin) + ydots);
@@ -608,7 +604,7 @@ int diffusion()
               break;
       case 2: /* Release new point on a circle inside the box with radius
                  given by the radius variable */
-               angle=2*(LDBL)rand()/(RAND_MAX/PI);
+               angle=2*(double)rand()/(RAND_MAX/PI);
                FPUsincos(&angle,&sine,&cosine);
                x = (int)(cosine*radius + xdots);
                y = (int)(sine  *radius + ydots);
@@ -770,7 +766,6 @@ int diffusion()
 static int far *verhulst_array;
 unsigned long filter_cycles;
 static unsigned int half_time_check;
-static long   lPopulation, lRate;
 double Population,  Rate;
 static int    mono, outside_x;
 static long   LPI;
@@ -821,10 +816,7 @@ int Bifurcation(void)
       half_time_check = TRUE;
    }
 
-   if (integerfractal)
-      linit.y = ymax - iystop*dely;            /* Y-value of    */
-   else
-      init.y = (double)(yymax - iystop*delyy); /* bottom pixels */
+   init.y = (double)(yymax - iystop*delyy); /* bottom pixels */
 
    while (column <= ixstop)
    {
@@ -836,10 +828,7 @@ int Bifurcation(void)
          return(-1);
       }
 
-      if (integerfractal)
-         lRate = xmin + column*delx;
-      else
-         Rate = (double)(xxmin + column*delxx);
+      Rate = xxmin + column*delxx;
       verhulst();        /* calculate array once per column */
 
       for (row = iystop; row >= 0; row--) /* should be iystop & >=0 */
@@ -866,11 +855,7 @@ static void verhulst()          /* P. F. Verhulst (1845) */
    unsigned int pixel_row, errors;
    unsigned long counter;
 
-    if (integerfractal)
-       lPopulation = (parm.y == 0) ? (long)(SEED*fudge) : (long)(parm.y*fudge);
-    else
-       Population = (parm.y == 0 ) ? SEED : parm.y;
-
+   Population = (parm.y == 0 ) ? SEED : parm.y;
    errors = overflow = FALSE;
 
    for (counter=0 ; counter < filter_cycles ; counter++)
@@ -905,10 +890,7 @@ static void verhulst()          /* P. F. Verhulst (1845) */
       if (errors) return;
 
       /* assign population value to Y coordinate in pixels */
-      if (integerfractal)
-         pixel_row = iystop - (int)((lPopulation - linit.y) / dely); /* iystop */
-      else
-         pixel_row = iystop - (int)((Population - init.y) / delyy);
+      pixel_row = iystop - (int)((Population - init.y) / delyy);
 
       /* if it's visible on the screen, save it in the column array */
       if (pixel_row <= (unsigned int)iystop) /* JCO 6/6/92 */
@@ -921,25 +903,17 @@ static void verhulst()          /* P. F. Verhulst (1845) */
       }
    }
 }
-static  long    lBif_closenuf, lBif_savedpop;   /* poss future use  */
+
 static  double   Bif_closenuf,  Bif_savedpop;
 static  int      Bif_savedinc;
 static  long     Bif_savedand;
 
-static void Bif_Period_Init()
+static void Bif_Period_Init(void)
 {
    Bif_savedinc = 1;
    Bif_savedand = 1;
-   if (integerfractal)
-   {
-      lBif_savedpop = -1;
-      lBif_closenuf = dely / 8;
-   }
-   else
-   {
-      Bif_savedpop = -1.0;
-      Bif_closenuf = (double)delyy / 8.0;
-   }
+   Bif_savedpop = -1.0;
+   Bif_closenuf = delyy / 8.0;
 }
 
 static int _fastcall Bif_Periodic (long time)  /* Bifurcation Population Periodicity Check */
@@ -947,8 +921,7 @@ static int _fastcall Bif_Periodic (long time)  /* Bifurcation Population Periodi
 {
    if ((time & Bif_savedand) == 0)      /* time to save a new value */
    {
-      if (integerfractal) lBif_savedpop = lPopulation;
-      else                   Bif_savedpop =  Population;
+      Bif_savedpop =  Population;
       if (--Bif_savedinc == 0)
       {
          Bif_savedand = (Bif_savedand << 1) + 1;
@@ -957,16 +930,8 @@ static int _fastcall Bif_Periodic (long time)  /* Bifurcation Population Periodi
    }
    else                         /* check against an old save */
    {
-      if (integerfractal)
-      {
-         if (labs(lBif_savedpop-lPopulation) <= lBif_closenuf)
-            return(1);
-      }
-      else
-      {
-         if (fabs(Bif_savedpop-Population) <= Bif_closenuf)
-            return(1);
-      }
+      if (fabs(Bif_savedpop-Population) <= Bif_closenuf)
+         return(1);
    }
    return(0);
 }
@@ -984,145 +949,69 @@ int BifurcLambda(void) /* Used by lyanupov */
 
 /* Modified formulas below to generalize bifurcations. JCO 7/3/92 */
 
-#define LCMPLXtrig0(arg,out) Arg1->l = (arg); ltrig0(); (out)=Arg1->l
 #define  CMPLXtrig0(arg,out) Arg1->d = (arg); dtrig0(); (out)=Arg1->d
 
-int BifurcVerhulstTrig()
-  {
+int BifurcVerhulstTrig(void)
+{
 /*  Population = Pop + Rate * fn(Pop) * (1 - fn(Pop)) */
     tmp.x = Population;
     tmp.y = 0;
     CMPLXtrig0(tmp, tmp);
     Population += Rate * tmp.x * (1 - tmp.x);
     return (fabs(Population) > BIG);
-  }
+}
 
-int LongBifurcVerhulstTrig()
-  {
-#ifndef XFRACT
-    ltmp.x = lPopulation;
-    ltmp.y = 0;
-    LCMPLXtrig0(ltmp, ltmp);
-    ltmp.y = ltmp.x - multiply(ltmp.x,ltmp.x,bitshift);
-    lPopulation += multiply(lRate,ltmp.y,bitshift);
-#endif
-    return (overflow);
-  }
-
-int BifurcStewartTrig()
-  {
+int BifurcStewartTrig(void)
+{
 /*  Population = (Rate * fn(Population) * fn(Population)) - 1.0 */
     tmp.x = Population;
     tmp.y = 0;
     CMPLXtrig0(tmp, tmp);
     Population = (Rate * tmp.x * tmp.x) - 1.0;
     return (fabs(Population) > BIG);
-  }
+}
 
-int LongBifurcStewartTrig()
-  {
-#ifndef XFRACT
-    ltmp.x = lPopulation;
-    ltmp.y = 0;
-    LCMPLXtrig0(ltmp, ltmp);
-    lPopulation = multiply(ltmp.x,ltmp.x,bitshift);
-    lPopulation = multiply(lPopulation,lRate,      bitshift);
-    lPopulation -= fudge;
-#endif
-    return (overflow);
-  }
-
-int BifurcSetTrigPi()
-  {
+int BifurcSetTrigPi(void)
+{
     tmp.x = Population * PI;
     tmp.y = 0;
     CMPLXtrig0(tmp, tmp);
     Population = Rate * tmp.x;
     return (fabs(Population) > BIG);
-  }
+}
 
-int LongBifurcSetTrigPi()
-  {
-#ifndef XFRACT
-    ltmp.x = multiply(lPopulation,LPI,bitshift);
-    ltmp.y = 0;
-    LCMPLXtrig0(ltmp, ltmp);
-    lPopulation = multiply(lRate,ltmp.x,bitshift);
-#endif
-    return (overflow);
-  }
-
-int BifurcAddTrigPi()
-  {
+int BifurcAddTrigPi(void)
+{
     tmp.x = Population * PI;
     tmp.y = 0;
     CMPLXtrig0(tmp, tmp);
     Population += Rate * tmp.x;
     return (fabs(Population) > BIG);
-  }
+}
 
-int LongBifurcAddTrigPi()
-  {
-#ifndef XFRACT
-    ltmp.x = multiply(lPopulation,LPI,bitshift);
-    ltmp.y = 0;
-    LCMPLXtrig0(ltmp, ltmp);
-    lPopulation += multiply(lRate,ltmp.x,bitshift);
-#endif
-    return (overflow);
-  }
-
-int BifurcLambdaTrig()
-  {
+int BifurcLambdaTrig(void)
+{
 /*  Population = Rate * fn(Population) * (1 - fn(Population)) */
     tmp.x = Population;
     tmp.y = 0;
     CMPLXtrig0(tmp, tmp);
     Population = Rate * tmp.x * (1 - tmp.x);
     return (fabs(Population) > BIG);
-  }
-
-int LongBifurcLambdaTrig()
-  {
-#ifndef XFRACT
-    ltmp.x = lPopulation;
-    ltmp.y = 0;
-    LCMPLXtrig0(ltmp, ltmp);
-    ltmp.y = ltmp.x - multiply(ltmp.x,ltmp.x,bitshift);
-    lPopulation = multiply(lRate,ltmp.y,bitshift);
-#endif
-    return (overflow);
-  }
-
-#define LCMPLXpwr(arg1,arg2,out)    Arg2->l = (arg1); Arg1->l = (arg2);\
-         lStkPwr(); Arg1++; Arg2++; (out) = Arg2->l
+}
 
 long beta;
 
-int BifurcMay()
-  { /* X = (lambda * X) / (1 + X)^beta, from R.May as described in Pickover,
+int BifurcMay(void)
+{ /* X = (lambda * X) / (1 + X)^beta, from R.May as described in Pickover,
             Computers, Pattern, Chaos, and Beauty, page 153 */
     tmp.x = 1.0 + Population;
     tmp.x = pow(tmp.x, -beta); /* pow in math.h included with mpmath.h */
     Population = (Rate * Population) * tmp.x;
     return (fabs(Population) > BIG);
-  }
+}
 
-int LongBifurcMay()
-  {
-#ifndef XFRACT
-    ltmp.x = lPopulation + fudge;
-    ltmp.y = 0;
-    lparm2.x = beta * fudge;
-    LCMPLXpwr(ltmp, lparm2, ltmp);
-    lPopulation = multiply(lRate,lPopulation,bitshift);
-    lPopulation = divide(lPopulation,ltmp.x,bitshift);
-#endif
-    return (overflow);
-  }
-
-int BifurcMaySetup()
-  {
+int BifurcMaySetup(void)
+{
 
    beta = (long)param[2];
    if(beta < 2)
@@ -1131,7 +1020,7 @@ int BifurcMaySetup()
 
    timer(0,curfractalspecific->calctype);
    return(0);
-  }
+}
 
 /* Here Endeth the Generalised Bifurcation Fractal Engine   */
 
@@ -1140,7 +1029,7 @@ int BifurcMaySetup()
 
 /******************* standalone engine for "popcorn" ********************/
 
-int popcorn()   /* subset of std engine */
+int popcorn(void)   /* subset of std engine */
 {
    int start_row;
    start_row = 0;
@@ -1152,7 +1041,7 @@ int popcorn()   /* subset of std engine */
    }
    kbdcount=max_kbdcount;
    plot = noplot;
-   tempsqrx = ltempsqrx = 0; /* PB added this to cover weird BAILOUTs */
+   tempsqrx = 0; /* PB added this to cover weird BAILOUTs */
    for (row = start_row; row <= iystop; row++)
    {
       reset_periodicity = 1;
@@ -1222,8 +1111,8 @@ int lyapunov(void)
     return color;
 }
 
-
-int lya_setup () {
+int lya_setup(void)
+{
     /* This routine sets up the sequence for forcing the Rate parameter
         to vary between the two values.  It fills the array lyaRxy[] and
         sets lyaLength to the length of the sequence.
@@ -1290,7 +1179,8 @@ int lya_setup () {
     return 1;
 }
 
-int lyapunov_cycles_in_c(long filter_cycles, double a, double b) {
+int lyapunov_cycles_in_c(long filter_cycles, double a, double b)
+{
     int color, count, lnadjust;
     long i;
     double lyap, total, temp;
@@ -1458,7 +1348,8 @@ void abort_cellular(int err, int t)
 #endif
 }
 
-int cellular () {
+int cellular(void)
+{
    S16 start_row;
    S16 filled, notfilled;
    U16 cell_table[32];
@@ -1748,13 +1639,13 @@ int CellularSetup(void)
    return(0);
 }
 
-static void set_Cellular_palette()
+static void set_Cellular_palette(void)
 {
-   static Palettetype Red    = { 42, 0, 0 };
-   static Palettetype Green  = { 10,35,10 };
-   static Palettetype Blue   = { 13,12,29 };
-   static Palettetype Yellow = { 60,58,18 };
-   static Palettetype Brown  = { 42,21, 0 };
+   static Palettetype const Red    = { 42, 0, 0 };
+   static Palettetype const Green  = { 10,35,10 };
+   static Palettetype const Blue   = { 13,12,29 };
+   static Palettetype const Yellow = { 60,58,18 };
+   static Palettetype const Brown  = { 42,21, 0 };
 
    if (mapdacbox && colorstate != 0) return;       /* map= specified */
 
@@ -1791,18 +1682,15 @@ static void set_Cellular_palette()
 #define FROTH_BITSHIFT      28
 #define FROTH_D_TO_L(x)     ((long)((x)*(1L<<FROTH_BITSHIFT)))
 #define FROTH_CLOSE         1e-6      /* seems like a good value */
-#define FROTH_LCLOSE        FROTH_D_TO_L(FROTH_CLOSE)
 #define SQRT3               1.732050807568877193
 #define FROTH_SLOPE         SQRT3
-#define FROTH_LSLOPE        FROTH_D_TO_L(FROTH_SLOPE)
 #define FROTH_CRITICAL_A    1.028713768218725  /* 1.0287137682187249127 */
 #define froth_top_x_mapping(x)  ((x)*(x)-(x)-3*fsp->fl.f.a*fsp->fl.f.a/4)
 
-
-static char froth3_256c[] = "froth3.map";
-static char froth6_256c[] = "froth6.map";
-static char froth3_16c[] =  "froth316.map";
-static char froth6_16c[] =  "froth616.map";
+static char const froth3_256c[] = "froth3.map";
+static char const froth6_256c[] = "froth6.map";
+static char const froth3_16c[] =  "froth316.map";
+static char const froth6_16c[] =  "froth616.map";
 
 struct froth_double_struct {
     double a;
@@ -1853,8 +1741,8 @@ struct froth_struct *fsp=NULL; /* froth_struct pointer */
 
 /* color maps which attempt to replicate the images of James Alexander. */
 static void set_Froth_palette(void)
-   {
-   char *mapname;
+{
+   char const* mapname;
 
    if (colorstate != 0) /* 0 means dacbox matches default */
       return;
@@ -1882,7 +1770,7 @@ static void set_Froth_palette(void)
    }
 
 int froth_setup(void)
-   {
+{
    double sin_theta, cos_theta, x0, y0;
 
    sin_theta = SQRT3/2; /* sin(2*PI/3) */
@@ -1978,32 +1866,8 @@ int froth_setup(void)
    /* make the best of the .map situation */
    orbit_color = fsp->attractors != 6 && colors >= 16 ? (fsp->shades<<1)+1 : colors-1;
 
-   if (integerfractal)
-      {
-      struct froth_long_struct tmp_l;
-
-      tmp_l.a        = FROTH_D_TO_L(fsp->fl.f.a);
-      tmp_l.halfa    = FROTH_D_TO_L(fsp->fl.f.halfa);
-
-      tmp_l.top_x1   = FROTH_D_TO_L(fsp->fl.f.top_x1);
-      tmp_l.top_x2   = FROTH_D_TO_L(fsp->fl.f.top_x2);
-      tmp_l.top_x3   = FROTH_D_TO_L(fsp->fl.f.top_x3);
-      tmp_l.top_x4   = FROTH_D_TO_L(fsp->fl.f.top_x4);
-
-      tmp_l.left_x1  = FROTH_D_TO_L(fsp->fl.f.left_x1);
-      tmp_l.left_x2  = FROTH_D_TO_L(fsp->fl.f.left_x2);
-      tmp_l.left_x3  = FROTH_D_TO_L(fsp->fl.f.left_x3);
-      tmp_l.left_x4  = FROTH_D_TO_L(fsp->fl.f.left_x4);
-
-      tmp_l.right_x1 = FROTH_D_TO_L(fsp->fl.f.right_x1);
-      tmp_l.right_x2 = FROTH_D_TO_L(fsp->fl.f.right_x2);
-      tmp_l.right_x3 = FROTH_D_TO_L(fsp->fl.f.right_x3);
-      tmp_l.right_x4 = FROTH_D_TO_L(fsp->fl.f.right_x4);
-
-      fsp->fl.l = tmp_l;
-      }
    return 1;
-   }
+}
 
 void froth_cleanup(void)
    {
@@ -2032,7 +1896,6 @@ int calcfroth(void)   /* per pixel 1/2/g, called with row & col set */
    coloriter = 0;
    if(showdot>0)
       (*plot) (col, row, showdot%colors);
-   if (!integerfractal) /* fp mode */
       {
       if(invert)
          {
@@ -2126,101 +1989,7 @@ int calcfroth(void)   /* per pixel 1/2/g, called with row & col set */
             }
          }
       }
-   else /* integer mode */
-      {
-      if(invert)
-         {
-         invertz2(&tmp);
-         lold.x = (long)(tmp.x * fudge);
-         lold.y = (long)(tmp.y * fudge);
-         }
-      else
-         {
-         lold.x = lxpixel();
-         lold.y = lypixel();
-         }
 
-      while (!found_attractor && ((lmagnitud = (ltempsqrx=lsqr(lold.x)) + (ltempsqry=lsqr(lold.y))) < llimit)
-             && (lmagnitud >= 0) && (coloriter < maxit))
-         {
-         /* simple formula: z = z^2 + conj(z*(-1+ai)) */
-         /* but it's the attractor that makes this so interesting */
-         lnew.x = ltempsqrx - ltempsqry - lold.x - multiply(fsp->fl.l.a,lold.y,bitshift);
-         lold.y += (multiply(lold.x,lold.y,bitshift)<<1) - multiply(fsp->fl.l.a,lold.x,bitshift);
-         lold.x = lnew.x;
-         if (fsp->repeat_mapping)
-            {
-            lmagnitud = (ltempsqrx=lsqr(lold.x)) + (ltempsqry=lsqr(lold.y));
-            if ((lmagnitud > llimit) || (lmagnitud < 0))
-               break;
-            lnew.x = ltempsqrx - ltempsqry - lold.x - multiply(fsp->fl.l.a,lold.y,bitshift);
-            lold.y += (multiply(lold.x,lold.y,bitshift)<<1) - multiply(fsp->fl.l.a,lold.x,bitshift);
-            lold.x = lnew.x;
-            }
-         coloriter++;
-
-         if (show_orbit) {
-            if (keypressed())
-               break;
-            iplot_orbit(lold.x, lold.y, -1);
-         }
-
-         if (labs(fsp->fl.l.halfa-lold.y) < FROTH_LCLOSE
-              && lold.x > fsp->fl.l.top_x1 && lold.x < fsp->fl.l.top_x2)
-            {
-            if ((!fsp->repeat_mapping && fsp->attractors == 2)
-                || (fsp->repeat_mapping && fsp->attractors == 3))
-               found_attractor = 1;
-            else if (lold.x <= fsp->fl.l.top_x3)
-               found_attractor = 1;
-            else if (lold.x >= fsp->fl.l.top_x4) {
-               if (!fsp->repeat_mapping)
-                  found_attractor = 1;
-               else
-                  found_attractor = 2;
-             }
-            }
-         else if (labs(multiply(FROTH_LSLOPE,lold.x,bitshift)-fsp->fl.l.a-lold.y) < FROTH_LCLOSE
-                  && lold.x <= fsp->fl.l.right_x1 && lold.x >= fsp->fl.l.right_x2)
-            {
-            if (!fsp->repeat_mapping && fsp->attractors == 2)
-               found_attractor = 2;
-            else if (fsp->repeat_mapping && fsp->attractors == 3)
-               found_attractor = 3;
-            else if (lold.x >= fsp->fl.l.right_x3) {
-               if (!fsp->repeat_mapping)
-                  found_attractor = 2;
-               else
-                  found_attractor = 4;
-            }
-            else if (lold.x <= fsp->fl.l.right_x4) {
-               if (!fsp->repeat_mapping)
-                  found_attractor = 3;
-               else
-                  found_attractor = 6;
-             }
-            }
-         else if (labs(multiply(-FROTH_LSLOPE,lold.x,bitshift)-fsp->fl.l.a-lold.y) < FROTH_LCLOSE)
-            {
-            if (!fsp->repeat_mapping && fsp->attractors == 2)
-               found_attractor = 2;
-            else if (fsp->repeat_mapping && fsp->attractors == 3)
-               found_attractor = 2;
-            else if (lold.x >= fsp->fl.l.left_x3) {
-               if (!fsp->repeat_mapping)
-                  found_attractor = 3;
-               else
-                  found_attractor = 5;
-            }
-            else if (lold.x <= fsp->fl.l.left_x4) {
-               if (!fsp->repeat_mapping)
-                  found_attractor = 2;
-               else
-                  found_attractor = 3;
-             }
-            }
-         }
-      }
    if (show_orbit)
       scrub_orbit();
 
@@ -2303,57 +2072,29 @@ putting in as a stand-alone.
 */
 
 int froth_per_pixel(void)
-   {
-   if (!integerfractal) /* fp mode */
-      {
-      old.x = dxpixel();
-      old.y = dypixel();
-      tempsqrx=sqr(old.x);
-      tempsqry=sqr(old.y);
-      }
-   else  /* integer mode */
-      {
-      lold.x = lxpixel();
-      lold.y = lypixel();
-      ltempsqrx = multiply(lold.x, lold.x, bitshift);
-      ltempsqry = multiply(lold.y, lold.y, bitshift);
-      }
+{
+   old.x = dxpixel();
+   old.y = dypixel();
+   tempsqrx=sqr(old.x);
+   tempsqry=sqr(old.y);
    return 0;
-   }
+}
 
 int froth_per_orbit(void)
+{
+   new.x = tempsqrx - tempsqry - old.x - fsp->fl.f.a*old.y;
+   new.y = 2.0*old.x*old.y - fsp->fl.f.a*old.x + old.y;
+   if (fsp->repeat_mapping)
    {
-   if (!integerfractal) /* fp mode */
-      {
-      new.x = tempsqrx - tempsqry - old.x - fsp->fl.f.a*old.y;
-      new.y = 2.0*old.x*old.y - fsp->fl.f.a*old.x + old.y;
-      if (fsp->repeat_mapping)
-        {
-        old = new;
-        new.x = sqr(old.x) - sqr(old.y) - old.x - fsp->fl.f.a*old.y;
-        new.y = 2.0*old.x*old.y - fsp->fl.f.a*old.x + old.y;
-        }
-
-      if ((tempsqrx=sqr(new.x)) + (tempsqry=sqr(new.y)) >= rqlim)
-         return 1;
       old = new;
-      }
-   else  /* integer mode */
-      {
-      lnew.x = ltempsqrx - ltempsqry - lold.x - multiply(fsp->fl.l.a,lold.y,bitshift);
-      lnew.y = lold.y + (multiply(lold.x,lold.y,bitshift)<<1) - multiply(fsp->fl.l.a,lold.x,bitshift);
-      if (fsp->repeat_mapping)
-         {
-         if ((ltempsqrx=lsqr(lnew.x)) + (ltempsqry=lsqr(lnew.y)) >= llimit)
-            return 1;
-         lold = lnew;
-         lnew.x = ltempsqrx - ltempsqry - lold.x - multiply(fsp->fl.l.a,lold.y,bitshift);
-         lnew.y = lold.y + (multiply(lold.x,lold.y,bitshift)<<1) - multiply(fsp->fl.l.a,lold.x,bitshift);
-         }
-      if ((ltempsqrx=lsqr(lnew.x)) + (ltempsqry=lsqr(lnew.y)) >= llimit)
-         return 1;
-      lold = lnew;
-      }
-   return 0;
+      new.x = sqr(old.x) - sqr(old.y) - old.x - fsp->fl.f.a*old.y;
+      new.y = 2.0*old.x*old.y - fsp->fl.f.a*old.x + old.y;
    }
+
+   if ((tempsqrx=sqr(new.x)) + (tempsqry=sqr(new.y)) >= rqlim)
+      return 1;
+   old = new;
+
+   return 0;
+}
 

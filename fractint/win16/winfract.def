@@ -25,15 +25,14 @@ EXPORTS
     SELECTEXTENDED      @12
     SELECTFRACPARAMS    @13
     SELECTFRACTAL       @14
-    SELECTFULLSCREEN    @15
-    SELECTFUNNYGLASSES  @16
-    SELECTIFS3D         @17
-    SELECTIMAGE         @18
-    SELECTSAVEPAR       @19
-    SELECTSTARFIELD     @20
-    STATUS              @21
-    STATUSBOXPROC       @22
-    WINTEXT_PROC        @23
-    ZOOMBARDLG          @24
-    ZOOMBARPROC         @25
+    SELECTFUNNYGLASSES  @15
+    SELECTIFS3D         @16
+    SELECTIMAGE         @17
+    SELECTSAVEPAR       @18
+    SELECTSTARFIELD     @19
+    STATUS              @20
+    STATUSBOXPROC       @21
+    WINTEXT_PROC        @22
+    ZOOMBARDLG          @23
+    ZOOMBARPROC         @24
 

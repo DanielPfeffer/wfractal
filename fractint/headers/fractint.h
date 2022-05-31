@@ -477,9 +477,9 @@ typedef struct moreparams far       MOREPARAMS;
 
 struct fractalspecificstuff
 {
-   char  *name;                         /* name of the fractal */
+   char const* name;                    /* name of the fractal */
                                         /* (leading "*" supresses name display) */
-   char  far *param[4];                 /* name of the parameters */
+   char const far* param[4];            /* name of the parameters */
    double paramvalue[4];                /* default parameter values */
    int   helptext;                      /* helpdefs.h HT_xxxx, -1 for none */
    int   helpformula;                   /* helpdefs.h HF_xxxx, -1 for none */
@@ -491,7 +491,6 @@ struct fractalspecificstuff
    int   isinteger;                     /* 1 if integerfractal, 0 otherwise */
    int   tojulia;                       /* mandel-to-julia switch */
    int   tomandel;                      /* julia-to-mandel switch */
-   int   tofloat;                       /* integer-to-floating switch */
    int   symmetry;                      /* applicable symmetry logic
                                            0 = no symmetry
                                           -1 = y-axis symmetry (If No Params)
@@ -615,14 +614,10 @@ extern struct fractalspecificstuff far *curfractalspecific;
 
 #define CMPLXmod(z)     (sqr((z).x)+sqr((z).y))
 #define CMPLXconj(z)    ((z).y =  -((z).y))
-#define LCMPLXmod(z)    (lsqr((z).x)+lsqr((z).y))
-#define LCMPLXconj(z)   ((z).y =  -((z).y))
 
 #define PER_IMAGE   (fractalspecific[fractype].per_image)
 #define PER_PIXEL   (fractalspecific[fractype].per_pixel)
 #define ORBITCALC   (fractalspecific[fractype].orbitcalc)
-
-typedef  _LCMPLX LCMPLX;
 
 /* 3D stuff - formerly in 3d.h */
 #ifndef dot_product
@@ -773,16 +768,13 @@ struct dblcoords {
     };
 
 extern BYTE trigndx[];
-extern void (*ltrig0)(void), (*ltrig1)(void), (*ltrig2)(void), (*ltrig3)(void);
 extern void (*dtrig0)(void), (*dtrig1)(void), (*dtrig2)(void), (*dtrig3)(void);
 
 struct trig_funct_lst
 {
-    char *name;
-    void (*lfunct)(void);
+    char const* name;
     void (*dfunct)(void);
-    void (*mfunct)(void);
-} ;
+};
 extern struct trig_funct_lst trigfn[];
 
 /* function prototypes */

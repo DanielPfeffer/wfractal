@@ -351,28 +351,7 @@ PopFloat()
    return pop;
 }
 
-LCMPLX
-PopLong()
-{
-   LCMPLX pop;
-
-   if (!QueueEmpty())
-   {
-      ListFront--;
-      if (ListFront < 0)
-          ListFront = ListSize - 1;
-      if (FromMemDisk(8*ListFront, sizeof(pop.x), &pop.x) &&
-          FromMemDisk(8*ListFront +sizeof(pop.x), sizeof(pop.y), &pop.y))
-         --lsize;
-      return pop;
-   }
-   pop.x = 0;
-   pop.y = 0;
-   return pop;
-}
-
-int
-EnQueueFloat(float x, float y)
+int EnQueueFloat(float x, float y)
 {
    return PushFloat(x, y);
 }
@@ -405,29 +384,6 @@ DeQueueFloat()
    out.y = 0;
    return out;
 }
-
-LCMPLX
-DeQueueLong()
-{
-   LCMPLX out;
-   out.x = 0;
-   out.y = 0;
-
-   if (ListBack != ListFront)
-   {
-      if (FromMemDisk(8*ListBack, sizeof(out.x), &out.x) &&
-          FromMemDisk(8*ListBack +sizeof(out.x), sizeof(out.y), &out.y))
-      {
-         ListBack = (ListBack + 1) % ListSize;
-         lsize--;
-      }
-      return out;
-   }
-   out.x = 0;
-   out.y = 0;
-   return out;
-}
-
 
 
 /*
@@ -493,11 +449,7 @@ void Jiim(int which)         /* called by fractint */
    static int mode = 0;      /* point, circle, ... */
    int       oldlookatmouse = lookatmouse;
    double cr, ci;
-#ifndef XFRACT
    double r;
-#else
-   LDBL r;
-#endif
    int xfactor, yfactor;             /* aspect ratio          */
 
    int xoff, yoff;                   /* center of the window  */
@@ -668,10 +620,7 @@ void Jiim(int which)         /* called by fractint */
    row = (int)(cvt.c*cr + cvt.d*ci + cvt.f + .5);
 
    /* possible extraseg arrays have been trashed, so set up again */
-   if(integerfractal)
-      fill_lx_array();
-   else
-      fill_dx_array();
+   fill_dx_array();
 
    Cursor_SetPos(col, row);
    Cursor_Show();
@@ -875,18 +824,8 @@ void Jiim(int which)         /* called by fractint */
 
          if(exact == 0)
          {
-            if(integerfractal)
-            {
-               cr = lxpixel();
-               ci = lypixel();
-               cr /= (1L<<bitshift);
-               ci /= (1L<<bitshift);
-            }
-            else
-            {
-               cr = dxpixel();
-               ci = dypixel();
-            }
+            cr = dxpixel();
+            ci = dypixel();
          }
          actively_computing = 1;
          if(show_numbers) /* write coordinates on screen */
@@ -909,11 +848,8 @@ void Jiim(int which)         /* called by fractint */
                displays(5, vesa_yres-show_numbers, WHITE, BLACK, str,strlen(str));
          }
          iter = 1;
-         old.x = old.y = lold.x = lold.y = 0;
          SaveC.x = init.x =  cr;
          SaveC.y = init.y =  ci;
-         linit.x = (long)(init.x*fudge);
-         linit.y = (long)(init.y*fudge);
 
          old_x = old_y = -1;
 /*
@@ -1170,11 +1106,6 @@ void Jiim(int which)         /* called by fractint */
          if(iter < maxit)
          {
             color = (int)iter%colors;
-            if(integerfractal)
-            {
-               old.x = lold.x; old.x /= fudge;
-               old.y = lold.y; old.y /= fudge;
-            }
             x = (int)((old.x - init.x) * xfactor * 3 * zoom + xoff);
             y = (int)((old.y - init.y) * yfactor * 3 * zoom + yoff);
             if((*ORBITCALC)())
@@ -1206,7 +1137,6 @@ void Jiim(int which)         /* called by fractint */
          old_y = y;
       }
       old = new;
-      lold = lnew;
    } /* end while(still) */
 finish:
 

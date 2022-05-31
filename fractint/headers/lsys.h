@@ -48,14 +48,14 @@ struct lsys_turtlestatef {
     char counter, angle, reverse, stackoflow;
     /* dmaxangle is maxangle - 1 */
     char maxangle, dmaxangle, curcolor, dummy;  /* dummy ensures longword alignment */
-    LDBL size;
-    LDBL realangle;
-    LDBL xpos, ypos;
-    LDBL xmin, ymin, xmax, ymax;
-    LDBL aspect; /* aspect ratio of each pixel, ysize/xsize */
+    double size;
+    double realangle;
+    double xpos, ypos;
+    double xmin, ymin, xmax, ymax;
+    double aspect; /* aspect ratio of each pixel, ysize/xsize */
     union {
         long n;
-        LDBL nf;
+        double nf;
     } parm;
 };
 

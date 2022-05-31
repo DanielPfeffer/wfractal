@@ -12,6 +12,9 @@
  */
 
 #include <string.h>
+
+#include <mem.h>
+
   /* see Fractint.c for a description of the "include"  hierarchy */
 #include "port.h"
 #include "prototyp.h"
@@ -313,7 +316,7 @@ int gifview()
    if (dotmode == 11) { /* disk-video */
       static FCODE o_msg[] = {"Restore completed"};
       char msg[sizeof(o_msg)];
-      far_strcpy(msg,o_msg);
+      _fstrcpy(msg, o_msg);
       dvid_status(0,msg);
       dvid_status(1,"");
       }
@@ -352,7 +355,7 @@ static int out_line_dither(BYTE *pixels, int linelen)
     int i,nexterr,brt,err;
         if(ditherbuf == NULL)
         ditherbuf = (char far *)farmemalloc(linelen+1);
-        far_memset( ditherbuf, 0, linelen+1);
+        _fmemset(ditherbuf, 0, linelen+1);
 
     nexterr = (rand()&0x1f)-16;
     for (i=0;i<linelen;i++) {

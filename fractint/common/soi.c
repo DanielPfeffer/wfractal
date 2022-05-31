@@ -21,16 +21,6 @@
 #include "port.h"
 #include "prototyp.h"
 
-#define DBLS LDBL
-#define FABS(x)  fabsl(x)
-/* the following needs to be changed back to frexpl once the portability
-   issue has been addressed JCO */
-#ifndef XFRACT
-#define FREXP(x,y) frexpl(x,y)
-#else
-#define FREXP(x,y) frexp(x,y)
-#endif
-
 #define TRUE 1
 #define FALSE 0
 #define EVERY 15
@@ -42,26 +32,26 @@ int max_rhombus_depth;
 int minstackavail;
 /* int minstack=1700; */ /* need this much stack to recurse */
 int minstack=2200; /* and this much stack to not crash when <tab> is pressed */
-static DBLS twidth;
-static DBLS equal;
+static double twidth;
+static double equal;
 static char baxinxx = FALSE;
 
 
-long iteration(register DBLS cr, register DBLS ci,
-	      register DBLS re, register DBLS im,
+long iteration(register double cr, register double ci,
+	      register double re, register double im,
 	      long start)
 {
   register long iter,offset=0;
   int k,n;
-  register DBLS ren,imn,sre,sim;
+  register double ren,imn,sre,sim;
 #ifdef INTEL
   register float mag;
   register unsigned long bail=0x41800000,magi; /* bail=16.0 */
   register unsigned long eq=*(unsigned long *)&equal;
 #else
-  register DBLS mag;
+  register double mag;
 #endif
-  DBLS d;
+  double d;
   int exponent;
 
   if(baxinxx)
@@ -145,17 +135,17 @@ long iteration(register DBLS cr, register DBLS ci,
 	  re+=cr;
 
 #ifdef INTEL
-	  mag=FABS(sre-re);
+	  mag=fabs(sre-re);
 	  magi=*(unsigned long *)&mag;
 	  if(magi<eq)
 	    {
-	      mag=FABS(sim-im);
+	      mag=fabs(sim-im);
 	      magi=*(unsigned long *)&mag;
 	      if(magi<eq)
 		return BASIN_COLOR;
 	    }
 #else /* INTEL */
-	  if(FABS(sre-re)<equal&&FABS(sim-im)<equal)
+	  if(fabs(sre-re)<equal&&fabs(sim-im)<equal)
 	    return BASIN_COLOR;
 #endif /* INTEL */
 
@@ -304,7 +294,7 @@ long iteration(register DBLS cr, register DBLS ci,
 #else
       d=mag;
 #endif
-      FREXP(d,&exponent);
+      frexp(d,&exponent);
       return (maxit+offset-(((iter-1)<<3)+(long)adjust[exponent>>3]));
     }
 }
@@ -373,8 +363,8 @@ interpolate(cre1,midr,cre2,\
    (x0,w0),..,(x2,w2). */
 #define INTERPOLATE(x0,x1,x2,w0,w1,w2,b0,b1,b2) \
 b0=w0;\
-b1=(w1-w0)/(LDBL)(x1-x0);\
-b2=((w2-w1)/(LDBL)(x2-x1)-b1)/(x2-x0)
+b1=(w1-w0)/(double)(x1-x0);\
+b2=((w2-w1)/(double)(x2-x1)-b1)/(x2-x0)
 
 /* evaluate Newton polynomial given by (x0,b0),(x1,b1) at x:=t */
 #define EVALUATE(x0,x1,b0,b1,b2,t) \
@@ -383,24 +373,24 @@ b2=((w2-w1)/(LDBL)(x2-x1)-b1)/(x2-x0)
 /* Newton Interpolation.
    It computes the value of the interpolation polynomial given by
    (x0,w0)..(x2,w2) at x:=t */
-static DBLS interpolate(DBLS x0, DBLS x1, DBLS x2,
-			  DBLS w0, DBLS w1, DBLS w2,
-			  DBLS t)
+static double interpolate(double x0, double x1, double x2,
+			  double w0, double w1, double w2,
+			  double t)
 {
-  register DBLS b0=w0,b1=w1,b2=w2,b;
+  register double b0=w0,b1=w1,b2=w2,b;
 
   /*b0=(r0*b1-r1*b0)/(x1-x0);
   b1=(r1*b2-r2*b1)/(x2-x1);
   b0=(r0*b1-r2*b0)/(x2-x0);
 
-  return (DBLS)b0;*/
+  return (double)b0;*/
   b=(b1-b0)/(x1-x0);
-  return (DBLS)((((b2-b1)/(x2-x1)-b)/(x2-x0))*(t-x1)+b)*(t-x0)+b0;
+  return (double)((((b2-b1)/(x2-x1)-b)/(x2-x0))*(t-x1)+b)*(t-x0)+b0;
   /*
   if(t<x1)
-    return w0+((t-x0)/(LDBL)(x1-x0))*(w1-w0);
+    return w0+((t-x0)/(double)(x1-x0))*(w1-w0);
   else
-    return w1+((t-x1)/(LDBL)(x2-x1))*(w2-w1);*/
+    return w1+((t-x1)/(double)(x2-x1))*(w2-w1);*/
 }
 #if (_MSC_VER >= 700)
 #pragma code_seg ("soi2_text")     /* place following in an overlay */
@@ -426,7 +416,7 @@ static DBLS interpolate(DBLS x0, DBLS x1, DBLS x2,
 
 	  iter       : current number of iterations
 	  */
-static DBLS zre1, zim1, zre2, zim2, zre3, zim3, zre4, zim4, zre5, zim5,
+static double zre1, zim1, zre2, zim2, zre3, zim3, zre4, zim4, zre5, zim5,
             zre6, zim6, zre7, zim7, zre8, zim8, zre9, zim9;
 /*
    The purpose of this macro is to reduce the number of parameters of the
@@ -447,7 +437,7 @@ static DBLS zre1, zim1, zre2, zim2, zre3, zim3, zre4, zim4, zre5, zim5,
  zre9=(ZRE9);zim9=(ZIM9);\
  status=rhombus((CRE1),(CRE2),(CIM1),(CIM2),(X1),(X2),(Y1),(Y2),(ITER))
 
-static int rhombus(DBLS cre1, DBLS cre2, DBLS cim1, DBLS cim2,
+static int rhombus(double cre1, double cre2, double cim1, double cim2,
 			   int x1, int x2, int y1, int y2, long iter)
 {
   /* The following variables do not need their values saved */
@@ -456,29 +446,29 @@ static int rhombus(DBLS cre1, DBLS cre2, DBLS cim1, DBLS cim2,
   static int far x,y,z,savex;
 
 #if 0
-  static DBLS far re,im,restep,imstep,interstep,helpre;
-  static DBLS far zre,zim;
+  static double far re,im,restep,imstep,interstep,helpre;
+  static double far zre,zim;
   /* interpolation coefficients */
-  static DBLS far br10,br11,br12,br20,br21,br22,br30,br31,br32;
-  static DBLS far bi10,bi11,bi12,bi20,bi21,bi22,bi30,bi31,bi32;
+  static double far br10,br11,br12,br20,br21,br22,br30,br31,br32;
+  static double far bi10,bi11,bi12,bi20,bi21,bi22,bi30,bi31,bi32;
   /* ratio of interpolated test point to iterated one */
-  static DBLS far l1,l2;
+  static double far l1,l2;
   /* squares of key values */
-  static DBLS far rq1,iq1;
-  static DBLS far rq2,iq2;
-  static DBLS far rq3,iq3;
-  static DBLS far rq4,iq4;
-  static DBLS far rq5,iq5;
-  static DBLS far rq6,iq6;
-  static DBLS far rq7,iq7;
-  static DBLS far rq8,iq8;
-  static DBLS far rq9,iq9;
+  static double far rq1,iq1;
+  static double far rq2,iq2;
+  static double far rq3,iq3;
+  static double far rq4,iq4;
+  static double far rq5,iq5;
+  static double far rq6,iq6;
+  static double far rq7,iq7;
+  static double far rq8,iq8;
+  static double far rq9,iq9;
 
   /* test points */
-  static DBLS far cr1,cr2;
-  static DBLS far ci1,ci2;
-  static DBLS far tzr1,tzi1,tzr2,tzi2,tzr3,tzi3,tzr4,tzi4;
-  static DBLS far trq1,tiq1,trq2,tiq2,trq3,tiq3,trq4,tiq4;
+  static double far cr1,cr2;
+  static double far ci1,ci2;
+  static double far tzr1,tzi1,tzr2,tzi2,tzr3,tzi3,tzr4,tzi4;
+  static double far trq1,tiq1,trq2,tiq2,trq3,tiq3,trq4,tiq4;
 #else
 #define re        mem_static[ 0]
 #define im        mem_static[ 1]
@@ -553,19 +543,19 @@ static int rhombus(DBLS cre1, DBLS cre2, DBLS cim1, DBLS cim2,
   static int far avail;
 
   /* the variables below need to have local copis for recursive calls */
-  DBLS far *mem;
-  DBLS far *mem_static;
+  double far *mem;
+  double far *mem_static;
   /* center of rectangle */
-  DBLS midr=(cre1+cre2)/2,midi=(cim1+cim2)/2;
+  double midr=(cre1+cre2)/2,midi=(cim1+cim2)/2;
 
 #if 0
   /* saved values of key values */
-  DBLS sr1,si1,sr2,si2,sr3,si3,sr4,si4;
-  DBLS sr5,si5,sr6,si6,sr7,si7,sr8,si8,sr9,si9;
+  double sr1,si1,sr2,si2,sr3,si3,sr4,si4;
+  double sr5,si5,sr6,si6,sr7,si7,sr8,si8,sr9,si9;
   /* key values for subsequent rectangles */
-  DBLS re10,re11,re12,re13,re14,re15,re16,re17,re18,re19,re20,re21;
-  DBLS im10,im11,im12,im13,im14,im15,im16,im17,im18,im19,im20,im21;
-  DBLS re91,re92,re93,re94,im91,im92,im93,im94;
+  double re10,re11,re12,re13,re14,re15,re16,re17,re18,re19,re20,re21;
+  double im10,im11,im12,im13,im14,im15,im16,im17,im18,im19,im20,im21;
+  double re91,re92,re93,re94,im91,im92,im93,im94;
 #else
 #define sr1  mem[ 0]
 #define si1  mem[ 1]
@@ -628,7 +618,7 @@ static int rhombus(DBLS cre1, DBLS cre2, DBLS cim1, DBLS cim2,
      static variables, then we make our own "stack" with copies
      for each recursive call of rhombus() for the rest.
    */
-  mem_static = (DBLS far *)sizeofstring;
+  mem_static = (double far *)sizeofstring;
   mem = mem_static+ 66 + 50*rhombus_depth;
 #endif
 
@@ -898,56 +888,56 @@ static int rhombus(DBLS cre1, DBLS cre2, DBLS cim1, DBLS cim2,
       l1=(tzr1==0.0)?
 	(l1==0.0)?1.0:1000.0:
 	l1/tzr1;
-      if(FABS(1.0-l1)>twidth)
+      if(fabs(1.0-l1)>twidth)
 	break;
 
       l2=GET_IMAG(cr1,ci1);
       l2=(tzi1==0.0)?
 	(l2==0.0)?1.0:1000.0:
 	l2/tzi1;
-      if(FABS(1.0-l2)>twidth)
+      if(fabs(1.0-l2)>twidth)
 	break;
 
       l1=GET_REAL(cr2,ci1);
       l1=(tzr2==0.0)?
 	(l1==0.0)?1.0:1000.0:
 	l1/tzr2;
-      if(FABS(1.0-l1)>twidth)
+      if(fabs(1.0-l1)>twidth)
 	break;
 
       l2=GET_IMAG(cr2,ci1);
       l2=(tzi2==0.0)?
 	(l2==0.0)?1.0:1000.0:
 	l2/tzi2;
-      if(FABS(1.0-l2)>twidth)
+      if(fabs(1.0-l2)>twidth)
 	break;
 
       l1=GET_REAL(cr1,ci2);
       l1=(tzr3==0.0)?
 	(l1==0.0)?1.0:1000.0:
 	l1/tzr3;
-      if(FABS(1.0-l1)>twidth)
+      if(fabs(1.0-l1)>twidth)
 	break;
 
       l2=GET_IMAG(cr1,ci2);
       l2=(tzi3==0.0)?
 	(l2==0.0)?1.0:1000.0:
 	l2/tzi3;
-      if(FABS(1.0-l2)>twidth)
+      if(fabs(1.0-l2)>twidth)
 	break;
 
       l1=GET_REAL(cr2,ci2);
       l1=(tzr4==0.0)?
 	(l1==0.0)?1.0:1000.0:
 	l1/tzr4;
-      if(FABS(1.0-l1)>twidth)
+      if(fabs(1.0-l1)>twidth)
 	break;
 
       l2=GET_IMAG(cr2,ci2);
       l2=(tzi4==0.0)?
 	(l2==0.0)?1.0:1000.0:
 	l2/tzi4;
-      if(FABS(1.0-l2)>twidth)
+      if(fabs(1.0-l2)>twidth)
 	break;
     }
 
@@ -1072,9 +1062,9 @@ rhombus_done:
 void soi_ldbl(void)
 {
    int status;
-   DBLS tolerance=0.1;
-   DBLS stepx, stepy;
-   DBLS xxminl, xxmaxl, yyminl, yymaxl;
+   double tolerance=0.1;
+   double stepx, stepy;
+   double xxminl, xxmaxl, yyminl, yymaxl;
    minstackavail = 30000;
    rhombus_depth = -1;
    max_rhombus_depth = 0;

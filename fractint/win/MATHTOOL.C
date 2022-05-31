@@ -22,6 +22,8 @@
 #include <windows.h>
 #include <windowsx.h>
 
+#include "resource.h"
+
 #include "port.h"
 #include "prototyp.h"
 
@@ -35,9 +37,11 @@ static char const MTWindowTitle[] = "Math Tools";
 
 LRESULT CALLBACK MTWndProc(HWND, UINT, WPARAM, LPARAM);
 
-HWND hFractalWnd, hMathToolsWnd, hCoordBox, hZoomDlg, hZoomBar;
+HWND hFractalWnd, hCoordBox, hZoomDlg, hZoomBar;
+static HWND hMathToolsWnd;
 HANDLE hThisInst, hZoomBrush, hZoomPen;
-int MTWindowOpen = 0, CoordBoxOpen = 0, KillCoordBox = 0;
+static int MTWindowOpen = 0;
+int CoordBoxOpen = 0, KillCoordBox = 0;
 int ZoomBarOpen = 0, KillZoomBar = 0, Zooming = 0, TrackingZoom = 0;
 POINT ZoomClick, ZoomCenter;
 int ZoomBarMax = 100, ZoomBarMin = -100;
@@ -324,8 +328,6 @@ BOOL CALLBACK __export ZoomBarProc(HWND hWnd, UINT Message, WPARAM wp, LPARAM dp
 
 BOOL CALLBACK __export ZoomBarDlg(HWND hDlg, UINT Message, WPARAM wp, LPARAM dp)
 {
-   FARPROC lpFnct;
-
    switch(Message) {
       case WM_INITDIALOG:
          ZoomBarOpen = TRUE;
@@ -337,8 +339,6 @@ BOOL CALLBACK __export ZoomBarDlg(HWND hDlg, UINT Message, WPARAM wp, LPARAM dp)
          hZoomDlg = hDlg;
          hZoomBrush = GetStockObject(BLACK_BRUSH);
          hZoomPen = GetStockObject(WHITE_PEN);
-         if(!(lpFnct = MakeProcInstance((FARPROC)ZoomBarProc, hThisInst)))
-            return(FALSE);
          if(!(hZoomBar = CreateWindow("scrollbar", 0, WS_CHILD |
                            WS_TABSTOP | SBS_VERT,
                            38, 28, 18, 248, hDlg, 0, hThisInst, 0)))
@@ -351,7 +351,7 @@ BOOL CALLBACK __export ZoomBarDlg(HWND hDlg, UINT Message, WPARAM wp, LPARAM dp)
 
          /* Create a Window Subclass */
          DefZoomProc = (WNDPROC)GetWindowLong(hZoomBar, GWL_WNDPROC);
-         SetWindowLong(hZoomBar, GWL_WNDPROC, (LONG)lpFnct);
+         SetWindowLong(hZoomBar, GWL_WNDPROC, (LONG)ZoomBarProc);
          return(TRUE);
       case WM_MOVE:
          SaveWindowPosition(hDlg, ZoomBoxPosStr);
@@ -400,22 +400,17 @@ BOOL CALLBACK __export ZoomBarDlg(HWND hDlg, UINT Message, WPARAM wp, LPARAM dp)
 
 void ZoomBar(HWND hWnd)
 {
-   DLGPROC lpFnct;
-
    hFractalWnd = hWnd;
    if(ZoomBarOpen)
       KillZoomBar = TRUE;
-   else {
-      if(lpFnct = MakeProcInstance((FARPROC)ZoomBarDlg, hThisInst))
+   else
+   {
+      if (CreateDialog(hThisInst, MAKEINTRESOURCE(IDD_ZOOMBAR), hWnd, ZoomBarDlg))
       {
-         if(CreateDialog(hThisInst, "ZoomBar", hWnd, lpFnct))
-         {
-            SetFocus(hWnd);
-            return;
-         }
+         SetFocus(hWnd);
+         return;
       }
-      MessageBox(hWnd, "Error Opening Zoom Bar",
-                 NULL, MB_ICONEXCLAMATION | MB_OK);
+      MessageBox(hWnd, "Error Opening Zoom Bar", NULL, MB_ICONEXCLAMATION | MB_OK);
    }
 }
 
@@ -529,18 +524,13 @@ void UpdateCoordBox(DWORD dw) {
 
 void CoordinateBox(HWND hWnd)
 {
-   DLGPROC lpCoordBox;
-
    hFractalWnd = hWnd;
    if(CoordBoxOpen)
       KillCoordBox = TRUE;
    else {
-      if(lpCoordBox = MakeProcInstance((FARPROC)CoordBoxDlg, hThisInst)) {
-         if(CreateDialog(hThisInst, "CoordBox", hWnd, lpCoordBox))
-            return;
-      }
-      MessageBox(hWnd, "Error Opening Coordinate Box",
-                 NULL, MB_ICONEXCLAMATION | MB_OK);
+      if(CreateDialog(hThisInst, MAKEINTRESOURCE(IDD_COORDBOX), hWnd, CoordBoxDlg))
+         return;
+      MessageBox(hWnd, "Error Opening Coordinate Box", NULL, MB_ICONEXCLAMATION | MB_OK);
    }
    ProgStr = Winfract;
 }
@@ -549,7 +539,7 @@ void CoordinateBox(HWND hWnd)
 
 /* Math Tools Window - Not Implemented Yet */
 
-BOOL OpenMTWnd(void) {
+static BOOL OpenMTWnd(void) {
     hMathToolsWnd = CreateWindow(
         MTClassName,
         MTWindowTitle,

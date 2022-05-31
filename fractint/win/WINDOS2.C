@@ -2,17 +2,18 @@
 /* Windows versions of DOS functions needed by PROMPTS.C */
 
 #define STRICT
+#include <ctype.h>
+#include <string.h>
+
+#include <dos.h>
+#include <fcntl.h>
+#include <io.h>
+#include <mem.h>
+#include <sys\types.h>
+#include <sys\stat.h>
 
 #include "port.h"
 #include "prototyp.h"
-
-#include <string.h>
-#include <dos.h>
-#include <sys\types.h>
-#include <sys\stat.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <io.h>
 
 #include "fractype.h"
 #include "helpdefs.h"
@@ -733,8 +734,8 @@ void stackscreen()
          }
       savebytes = 25*80;
       if ((ptr = savescreen[i] = farmemalloc((long)(2*savebytes)))) {
-         far_memcpy(ptr,wintext_chars,savebytes);
-         far_memcpy(ptr+savebytes,wintext_attrs,savebytes);
+         _fmemcpy(ptr, wintext_chars, savebytes);
+         _fmemcpy(ptr+savebytes, wintext_attrs, savebytes);
          }
       else {
             static char far msg[]={"insufficient memory, aborting"};
@@ -758,8 +759,8 @@ void unstackscreen()
    if (--screenctr >= 0) { /* unstack */
       savebytes = 25*80;
       if ((ptr = savescreen[screenctr])) {
-         far_memcpy(wintext_chars,ptr,savebytes);
-         far_memcpy(wintext_attrs,ptr+savebytes,savebytes);
+         _fmemcpy(wintext_chars, ptr, savebytes);
+         _fmemcpy(wintext_attrs, ptr+savebytes, savebytes);
          wintext_paintscreen(0,80,0,25);
          farmemfree(ptr);
          }
@@ -1147,7 +1148,7 @@ OK to replace it, Cancel to back out",CommandName);
                   last=i;
             for(i=0;i<last;i++)
                if(*CommandComment[i]=='\0')
-                  far_strcpy(CommandComment[i],";");
+                  _fstrcpy(CommandComment[i],";");
          }
          if (CommandComment[0][0])
             fprintf(parmfile, " ; %s", CommandComment[0]);
@@ -1280,7 +1281,7 @@ top:
       choicekey[nextleft+=2] = 'o';
       attributes[nextleft] = MENU_ITEM;
       LOADPROMPTSCHOICES(nextleft,"orbits window          <o>  ");
-      if(!(fractype==JULIA || fractype==JULIAFP || fractype==INVERSEJULIA))
+      if(!(fractype==JULIAFP))
           nextleft+=2;
       }
    LOADPROMPTSCHOICES(nextleft+=2,"      NEW IMAGE             ");
@@ -1300,7 +1301,7 @@ top:
              LOADPROMPTSCHOICES(nextleft,"toggle to/from julia <space>");
              showjuliatoggle = 1;
           }
-      if(fractype==JULIA || fractype==JULIAFP || fractype==INVERSEJULIA) {
+      if(fractype==JULIAFP) {
              choicekey[nextleft+=2] = 'j';
              attributes[nextleft] = MENU_ITEM;
              LOADPROMPTSCHOICES(nextleft,"toggle to/from inverse <j>  ");

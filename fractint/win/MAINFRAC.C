@@ -62,7 +62,7 @@ long  usr_distest;
 long delx, dely, delx2, dely2, delmin;
 long xmin, xmax, ymin, ymax, x3rd, y3rd;
 double  dxsize, dysize;                /* xdots-1, ydots-1            */
-LDBL delxx, delyy, delxx2, delyy2;
+double delxx, delyy, delxx2, delyy2;
 double ddelmin, xx3rd, yy3rd;
 double param[MAXPARAMS];
 int diskvideo, savedac;

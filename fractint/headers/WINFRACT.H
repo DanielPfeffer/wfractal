@@ -136,8 +136,6 @@
 #define WINMAXPIXELS   4096 /* Maximum pixel count across/down the screen */
 
 int PASCAL WinMain(HINSTANCE, HINSTANCE, LPSTR, int);
-BOOL InitApplication(HANDLE);
-BOOL InitInstance(HANDLE, int);
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK SaveStatusProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK About(HWND, UINT, WPARAM, LPARAM);

@@ -3,6 +3,11 @@
     to WinFract */
 
   /* see Fractint.c for a description of the "include"  hierarchy */
+
+#include <string.h>
+
+#include <mem.h>
+
 #include "port.h"
 #include "prototyp.h"
 #include "fractype.h"
@@ -26,7 +31,7 @@ void _fastcall save_history_info()
       return;
    MoveFromMemory((BYTE far *)&last,(U16)sizeof(HISTORY),1L,(long)saveptr,history);
 
-   far_memset((void far *)&current,0,sizeof(HISTORY));
+   _fmemset(&current, 0, sizeof(HISTORY));
    current.fractal_type    = (short)fractype                  ;
    current.xmin       = xxmin                     ;
    current.xmax       = xxmax                     ;
@@ -147,22 +152,21 @@ void _fastcall save_history_info()
    current.oy3rd           = oy3rd;
    current.keep_scrn_coords= (short)keep_scrn_coords;
    current.drawmode        = drawmode;
-   far_memcpy(current.dac,dacbox,256*3);
+   _fmemcpy(current.dac, dacbox, 256*3);
    switch(fractype)
    {
-   case FORMULA:
    case FFORMULA:
-      far_strncpy(current.filename,FormFileName,FILE_MAX_PATH);
-      far_strncpy(current.itemname,FormName,ITEMNAMELEN+1);
+      _fstrncpy(current.filename, FormFileName, FILE_MAX_PATH);
+      _fstrncpy(current.itemname, FormName, ITEMNAMELEN+1);
       break;
    case IFS:
    case IFS3D:
-      far_strncpy(current.filename,IFSFileName,FILE_MAX_PATH);
-      far_strncpy(current.itemname,IFSName,ITEMNAMELEN+1);
+      _fstrncpy(current.filename, IFSFileName, FILE_MAX_PATH);
+      _fstrncpy(current.itemname, IFSName, ITEMNAMELEN+1);
       break;
    case LSYSTEM:
-      far_strncpy(current.filename,LFileName,FILE_MAX_PATH);
-      far_strncpy(current.itemname,LName,ITEMNAMELEN+1);
+      _fstrncpy(current.filename, LFileName, FILE_MAX_PATH);
+      _fstrncpy(current.itemname, LName, ITEMNAMELEN+1);
       break;
    default:
       *(current.filename) = 0;
@@ -178,7 +182,7 @@ void _fastcall save_history_info()
    }
    else if(historyflag == 1)
       historyflag = 0;   /* coming from user history command, don't save */
-   else if(far_memcmp(&current,&last,sizeof(HISTORY)))
+   else if(_fmemcmp(&current,&last,sizeof(HISTORY)))
    {
       if(++saveptr >= maxhistory)  /* back to beginning of circular buffer */
          saveptr = 0;
@@ -327,30 +331,29 @@ void _fastcall restore_history_info(int i)
    if (keep_scrn_coords) set_orbit_corners = 1;
    drawmode = last.drawmode;
    usr_floatflag = (char)((curfractalspecific->isinteger) ? 0 : 1);
-   far_memcpy(dacbox,last.dac,256*3);
-   far_memcpy(olddacbox,last.dac,256*3);
+   _fmemcpy(dacbox, last.dac, 256*3);
+   _fmemcpy(olddacbox, last.dac, 256*3);
    if(mapdacbox)
-      far_memcpy(mapdacbox,last.dac,256*3);
+      _fmemcpy(mapdacbox, last.dac, 256*3);
    spindac(0,1);
-   if(fractype == JULIBROT || fractype == JULIBROTFP)
+   if(fractype == JULIBROTFP)
       savedac = 0;
    else
       savedac = 1;
    switch(fractype)
    {
-   case FORMULA:
    case FFORMULA:
-      far_strncpy(FormFileName,last.filename,FILE_MAX_PATH);
-      far_strncpy(FormName,    last.itemname,ITEMNAMELEN+1);
+      _fstrncpy(FormFileName, last.filename, FILE_MAX_PATH);
+      _fstrncpy(FormName,     last.itemname, ITEMNAMELEN+1);
       break;
    case IFS:
    case IFS3D:
-      far_strncpy(IFSFileName,last.filename,FILE_MAX_PATH);
-      far_strncpy(IFSName    ,last.itemname,ITEMNAMELEN+1);
+      _fstrncpy(IFSFileName, last.filename, FILE_MAX_PATH);
+      _fstrncpy(IFSName    , last.itemname, ITEMNAMELEN+1);
       break;
    case LSYSTEM:
-      far_strncpy(LFileName,last.filename,FILE_MAX_PATH);
-      far_strncpy(LName    ,last.itemname,ITEMNAMELEN+1);
+      _fstrncpy(LFileName, last.filename, FILE_MAX_PATH);
+      _fstrncpy(LName    , last.itemname, ITEMNAMELEN+1);
       break;
    default:
       break;
